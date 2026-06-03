@@ -96,6 +96,12 @@ export const verifyEmailSchema = z.object({
   token: z.string({ required_error: "Token là bắt buộc" }).min(1),
 });
 
+export const refreshTokenSchema = z.object({
+  refreshToken: z
+    .string({ required_error: "Refresh token là bắt buộc" })
+    .min(1, "Refresh token không được rỗng"),
+});
+
 // -----------------------------------------------------------------------------
 // 2. INFER TYPES TỪ SCHEMA
 // Dùng z.infer để tự động đồng bộ type với schema, không cần khai báo lại tay
@@ -106,6 +112,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 
 // -----------------------------------------------------------------------------
 // 3. MIDDLEWARE FACTORY

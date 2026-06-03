@@ -1,35 +1,21 @@
 // src/modules/auth/auth.controller.ts
 
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import authService from "./auth.service";
 import { RegisterRequestDto, LoginRequestDto } from "./auth.dto";
+import { CreatedResponse, OKResponse } from "../../shared/core/success.response";
+import { 
+  ConflictError, 
+  BadRequestError, 
+  AuthFailureError, 
+  ForbiddenError, 
+  ErrorResponse 
+} from "../../shared/core/error.response";
 
 // -----------------------------------------------------------------------------
 // AUTH CONTROLLER
 // Chỉ xử lý tầng HTTP: nhận request, gọi Service, trả response.
 // Không chứa business logic — đó là việc của Service.
-// -----------------------------------------------------------------------------
-
-// Helper chuẩn hoá response thành công
-const sendSuccess = (
-  res: Response,
-  data: unknown,
-  statusCode = 200,
-): Response => {
-  return res.status(statusCode).json({ success: true, data });
-};
-
-// Helper chuẩn hoá response lỗi
-const sendError = (
-  res: Response,
-  message: string,
-  statusCode = 400,
-): Response => {
-  return res.status(statusCode).json({ success: false, message });
-};
-
-// -----------------------------------------------------------------------------
-// CONTROLLER METHODS
 // -----------------------------------------------------------------------------
 
 /**
@@ -38,16 +24,22 @@ const sendError = (
 export const register = async (
   req: Request<{}, {}, RegisterRequestDto>,
   res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const result = await authService.register(req.body);
-    sendSuccess(res, result, 201);
+    new CreatedResponse({
+      message: "Đăng ký tài khoản thành công",
+      data: result,
+    }).send(res);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Đăng ký thất bại";
-
-    // Email trùng là lỗi client (400), không phải server error (500)
-    const statusCode = message.includes("đã được sử dụng") ? 409 : 400;
-    sendError(res, message, statusCode);
+    // Email trùng là lỗi 409 (Conflict), lỗi khác là 400 (Bad Request)
+    if (message.includes("đã được sử dụng")) {
+      next(new ConflictError(message));
+    } else {
+      next(new BadRequestError(message));
+    }
   }
 };
 
@@ -57,17 +49,22 @@ export const register = async (
 export const login = async (
   req: Request<{}, {}, LoginRequestDto>,
   res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const result = await authService.login(req.body);
-    sendSuccess(res, result);
+    new OKResponse({
+      message: "Đăng nhập thành công",
+      data: result,
+    }).send(res);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Đăng nhập thất bại";
-
-    // Sai credentials → 401, tài khoản bị khoá → 403
-    const statusCode = message.includes("vô hiệu hóa") ? 403 : 401;
-    sendError(res, message, statusCode);
+    const message = error instanceof Error ? error.message : "Đăng nhập thất bại";
+    // Tài khoản bị khoá -> 403, sai thông tin -> 401
+    if (message.includes("vô hiệu hóa")) {
+      next(new ForbiddenError(message));
+    } else {
+      next(new AuthFailureError(message));
+    }
   }
 };
 
@@ -77,16 +74,17 @@ export const login = async (
 export const verifyEmail = async (
   req: Request,
   res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
-    // Token lấy từ query string: /auth/verify-email?token=xxx
     const { token } = req.body;
     await authService.verifyEmail(token);
-    sendSuccess(res, { message: "Xác thực email thành công" });
+    new OKResponse({
+      message: "Xác thực email thành công",
+    }).send(res);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Xác thực email thất bại";
-    sendError(res, message, 400);
+    const message = error instanceof Error ? error.message : "Xác thực email thất bại";
+    next(new BadRequestError(message));
   }
 };
 
@@ -96,18 +94,16 @@ export const verifyEmail = async (
 export const forgotPassword = async (
   req: Request,
   res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     await authService.forgotPassword(req.body.email);
-
     // Luôn trả về response giống nhau dù email có tồn tại hay không
-    // để tránh email enumeration attack (đã xử lý ở Service layer)
-    sendSuccess(res, {
-      message:
-        "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.",
-    });
+    new OKResponse({
+      message: "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.",
+    }).send(res);
   } catch (error) {
-    sendError(res, "Có lỗi xảy ra. Vui lòng thử lại sau.", 500);
+    next(new ErrorResponse("Có lỗi xảy ra. Vui lòng thử lại sau.", 500, "INTERNAL_SERVER_ERROR"));
   }
 };
 
@@ -117,14 +113,62 @@ export const forgotPassword = async (
 export const resetPassword = async (
   req: Request,
   res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { token, newPassword } = req.body;
     await authService.resetPassword(token, newPassword);
-    sendSuccess(res, { message: "Đặt lại mật khẩu thành công" });
+    new OKResponse({
+      message: "Đặt lại mật khẩu thành công",
+    }).send(res);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Đặt lại mật khẩu thất bại";
-    sendError(res, message, 400);
+    const message = error instanceof Error ? error.message : "Đặt lại mật khẩu thất bại";
+    next(new BadRequestError(message));
   }
 };
+
+/**
+ * POST /auth/refresh-token
+ * Cấp lại cặp token mới từ refresh token còn hiệu lực.
+ */
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+    const tokens = await authService.refreshTokens(refreshToken);
+    new OKResponse({
+      message: "Làm mới token thành công",
+      data: tokens,
+    }).send(res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Làm mới token thất bại";
+    if (message.includes("hết hạn") || message.includes("không hợp lệ")) {
+      next(new AuthFailureError(message, "TOKEN_EXPIRED_OR_INVALID"));
+    } else {
+      next(new BadRequestError(message));
+    }
+  }
+};
+
+/**
+ * POST /auth/logout
+ * Đăng xuất: thu hồi refresh token của user hiện tại.
+ */
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await authService.logout(req.user!._id.toString());
+    new OKResponse({
+      message: "Đăng xuất thành công",
+    }).send(res);
+  } catch (error) {
+    next(new ErrorResponse("Đăng xuất thất bại. Vui lòng thử lại.", 500, "INTERNAL_SERVER_ERROR"));
+  }
+};
+

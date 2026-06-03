@@ -1,7 +1,0 @@
-{
-  "name": "{{name}}",
-  "email": "{{email}}",
-  "password": "{{password}}",
-  "confirmPassword": "{{password}}",
-  "notificationEmail": "{{notificationEmail}}"
-}

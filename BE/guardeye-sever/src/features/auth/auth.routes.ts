@@ -9,7 +9,9 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  refreshTokenSchema,
 } from "./auth.validation";
+import { authenticate } from "../../shared/middlewares/auth.middleware";
 
 // -----------------------------------------------------------------------------
 // AUTH ROUTES
@@ -47,4 +49,17 @@ router.post(
   authController.resetPassword,
 );
 
+// POST /auth/refresh-token
+// Cấp lại cặp token mới từ refresh token còn hiệu lực
+router.post(
+  "/refresh-token",
+  validate(refreshTokenSchema),
+  authController.refreshToken,
+);
+
+// POST /auth/logout
+// Yêu cầu đăng nhập (authenticate) để biết user cần thu hồi token
+router.post("/logout", authenticate, authController.logout);
+
 export default router;
+
