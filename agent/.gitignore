@@ -1,0 +1,30 @@
+# ─── Thông tin nhạy cảm (KHÔNG BAO GIỜ commit) ────────────────────────────────
+# config.json chứa deviceToken và serverUrl — phải giữ local, không lên git
+config.json
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+release/
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── pkg cache (binary Node.js tải về khi build exe) ─────────────────────────
+.pkg-cache/
+
+# ─── Logs (Windows Service tạo ra khi chạy) ───────────────────────────────────
+logs/
+*.log
+
+# ─── Coverage (Jest) ──────────────────────────────────────────────────────────
+coverage/
+
+# ─── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# ─── TypeScript incremental build cache ───────────────────────────────────────
+*.tsbuildinfo

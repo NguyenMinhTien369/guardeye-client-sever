@@ -1,0 +1,36 @@
+{
+  "name": "agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc --project tsconfig.json",
+    "build:exe": "npm run build && pkg dist/index.js --target node18-win-x64 --output release/agent.exe --config pkg.config.json",
+    "service:install": "node dist/service/install.js install",
+    "service:uninstall": "node dist/service/install.js uninstall",
+    "service:status": "node dist/service/install.js status",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "active-win": "^8.2.1",
+    "better-sqlite3": "^12.10.0",
+    "node-windows": "^1.0.0-beta.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.1",
+    "@types/node-windows": "^0.1.6",
+    "jest": "^30.4.2",
+    "pkg": "^5.8.1",
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}

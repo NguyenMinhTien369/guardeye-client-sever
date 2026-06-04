@@ -1,0 +1,9 @@
+{
+  "pkg": {
+    "assets": ["config.json"],
+    "scripts": ["dist/**/*.js"],
+    "targets": ["node18-win-x64"],
+    "outputPath": "release",
+    "options": ["--max-old-space-size=256"]
+  }
+}
