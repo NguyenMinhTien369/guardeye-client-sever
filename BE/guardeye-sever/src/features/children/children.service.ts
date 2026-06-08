@@ -1,5 +1,5 @@
 import childrenRepository from "./children.repository";
-import { CreateChildDto, UpdateChildDto, ChildResponseDto } from "./children.dto";
+import { CreateChildRequestDto, UpdateChildRequestDto, ChildResponseDto } from "./children.dto";
 import { NotFoundError } from "../../shared/core/error.response";
 import { IChild } from "./children.model";
 
@@ -18,6 +18,7 @@ export class ChildrenService {
       parentId: child.parentId.toString(),
       name: child.name,
       age: child.age,
+      gender: child.gender,
       avatar: child.avatar,
       createdAt: child.createdAt,
       updatedAt: child.updatedAt,
@@ -27,7 +28,7 @@ export class ChildrenService {
   /**
    * Tạo hồ sơ con mới.
    */
-  async createChild(parentId: string, data: CreateChildDto): Promise<ChildResponseDto> {
+  async createChild(parentId: string, data: CreateChildRequestDto): Promise<ChildResponseDto> {
     const child = await childrenRepository.createChild(parentId, data);
     return this.toResponseDto(child);
   }
@@ -57,7 +58,7 @@ export class ChildrenService {
   async updateChild(
     parentId: string,
     childId: string,
-    data: UpdateChildDto
+    data: UpdateChildRequestDto
   ): Promise<ChildResponseDto> {
     const child = await childrenRepository.updateChild(parentId, childId, data);
     if (!child) {

@@ -20,6 +20,10 @@ export const createChildSchema = z.object({
     .number({ required_error: "Tuổi là bắt buộc" })
     .min(0, "Tuổi không thể nhỏ hơn 0")
     .max(18, "Tuổi không thể lớn hơn 18"),
+  gender: z.enum(["male", "female", "other"], {
+    required_error: "Giới tính là bắt buộc",
+    invalid_type_error: "Giới tính không hợp lệ",
+  }),
   avatar: z.string().optional().default(""),
 });
 
@@ -35,6 +39,7 @@ export const updateChildSchema = z.object({
     .min(0, "Tuổi không thể nhỏ hơn 0")
     .max(18, "Tuổi không thể lớn hơn 18")
     .optional(),
+  gender: z.enum(["male", "female", "other"]).optional(),
   avatar: z.string().optional(),
 });
 

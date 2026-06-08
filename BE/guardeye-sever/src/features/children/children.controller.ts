@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import childrenService from "./children.service";
-import { CreateChildDto, UpdateChildDto } from "./children.dto";
+import { CreateChildRequestDto, UpdateChildRequestDto } from "./children.dto";
 import { CreatedResponse, OKResponse } from "../../shared/core/success.response";
 import { BadRequestError } from "../../shared/core/error.response";
 
@@ -13,7 +13,7 @@ import { BadRequestError } from "../../shared/core/error.response";
  * POST /children
  */
 export const createChild = async (
-  req: Request<{}, {}, CreateChildDto>,
+  req: Request<{}, {}, CreateChildRequestDto>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -76,7 +76,7 @@ export const getChildById = async (
  * PUT /children/:id
  */
 export const updateChild = async (
-  req: Request<{ id: string }, {}, UpdateChildDto>,
+  req: Request<{ id: string }, {}, UpdateChildRequestDto>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {

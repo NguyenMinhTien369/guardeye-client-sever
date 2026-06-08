@@ -1,5 +1,11 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
+// Định nghĩa trước các giá trị cho giới tính
+export enum GenderType {
+  male = "male",
+  female = "female"
+}
+
 // -----------------------------------------------------------------------------
 // 1. ĐỊNH NGHĨA INTERFACE (TYPESCRIPT)
 // -----------------------------------------------------------------------------
@@ -8,7 +14,7 @@ export interface IChild extends Document {
   parentId: mongoose.Types.ObjectId;
   name: string;
   age: number;
-  avatar: string;
+  gender: GenderType;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,9 +46,10 @@ const childSchema = new Schema<IChild, ChildModel>(
       min: [0, "Tuổi không được nhỏ hơn 0"],
       max: [18, "Tuổi không được lớn hơn 18"],
     },
-    avatar: {
+    gender: {
       type: String,
-      default: "",
+      enum: Object.values(GenderType),
+      required: [true, "Giới tính của trẻ là bắt buộc"],
     },
   },
   {

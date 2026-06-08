@@ -1,5 +1,5 @@
 import Child, { IChild } from "./children.model";
-import { CreateChildDto, UpdateChildDto } from "./children.dto";
+import { CreateChildRequestDto, UpdateChildRequestDto } from "./children.dto";
 
 // -----------------------------------------------------------------------------
 // CHILDREN REPOSITORY
@@ -14,7 +14,7 @@ export class ChildrenRepository {
   /**
    * Tạo hồ sơ con mới liên kết với Parent ID.
    */
-  async createChild(parentId: string, data: CreateChildDto): Promise<IChild> {
+  async createChild(parentId: string, data: CreateChildRequestDto): Promise<IChild> {
     const child = new Child({
       parentId,
       ...data,
@@ -28,7 +28,7 @@ export class ChildrenRepository {
   async updateChild(
     parentId: string,
     childId: string,
-    data: UpdateChildDto
+    data: UpdateChildRequestDto
   ): Promise<IChild | null> {
     return Child.findOneAndUpdate(
       { _id: childId, parentId },
