@@ -1,23 +1,4 @@
-// ─── Kiểu dữ liệu ─────────────────────────────────────────────────────────────
-
-export interface WindowEvent {
-  type: "window";
-  timestamp: string; // ISO 8601
-  title: string;
-  processName: string;
-  isIncognito: boolean;
-}
-
-export interface HistoryEvent {
-  type: "history";
-  timestamp: string; // ISO 8601
-  url: string;
-  title: string;
-  browser: "chrome" | "edge" | "unknown";
-  visitTime: string; // ISO 8601 — thời điểm trình duyệt ghi nhận
-}
-
-export type AgentEvent = WindowEvent | HistoryEvent;
+import { AgentEvent } from "../types/agent.types";
 
 // ─── Class ────────────────────────────────────────────────────────────────────
 

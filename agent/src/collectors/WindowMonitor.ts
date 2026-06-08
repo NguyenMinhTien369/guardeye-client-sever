@@ -1,5 +1,5 @@
 import activeWin, { Result as ActiveWinResult } from "active-win";
-import { WindowEvent } from "../sync/DataBuffer";
+import { WindowEvent } from "../types/agent.types";
 import { IncognitoDetector } from "./IncognitoDetector";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
