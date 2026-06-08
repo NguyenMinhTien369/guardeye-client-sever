@@ -1,10 +1,4 @@
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface IncognitoCheckResult {
-  isIncognito: boolean;
-  /** Keyword nào trigger (để debug/log). */
-  matchedKeyword: string | null;
-}
+import { IncognitoCheckResult } from "../types/agent.types";
 
 // ─── Class ────────────────────────────────────────────────────────────────────
 

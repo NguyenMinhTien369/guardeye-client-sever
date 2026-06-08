@@ -1,16 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
+import { AgentConfig } from "../types/agent.types";
 
-// ─── Kiểu dữ liệu cấu hình ────────────────────────────────────────────────────
-
-export interface AgentConfig {
-  deviceToken: string;
-  serverUrl: string;
-  monitoredUsers: string[];
-  syncIntervalMs: number;
-  mainLoopIntervalMs: number;
-  pausePollIntervalMs: number;
-}
+// Re-export để các file import cũ không bị vỡ (tạm thời)
+export type { AgentConfig } from "../types/agent.types";
 
 // ─── Giá trị mặc định (fallback) ──────────────────────────────────────────────
 

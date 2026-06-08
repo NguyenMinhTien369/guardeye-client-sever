@@ -1,23 +1,7 @@
-import { AgentConfig } from "../config/ConfigReader";
-import { DataBuffer, AgentEvent } from "./DataBuffer";
+import { AgentConfig, AgentEvent, SyncPayload, SyncResponse } from "../types/agent.types";
+import { DataBuffer } from "./DataBuffer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface SyncPayload {
-  deviceToken: string;
-  events: AgentEvent[];
-  /** ISO 8601 — thời điểm gửi request, server dùng để detect clock skew. */
-  sentAt: string;
-  /** Số event trong batch này — server dùng để validate. */
-  eventCount: number;
-}
-
-interface SyncResponse {
-  success: boolean;
-  /** Server có thể trả về số event đã lưu thành công. */
-  savedCount?: number;
-  message?: string;
-}
 
 export interface SyncServiceOptions {
   config: AgentConfig;

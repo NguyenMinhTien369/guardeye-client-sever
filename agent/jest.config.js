@@ -27,11 +27,9 @@ module.exports = {
     "^.+\\.tsx?$": [
       "ts-jest",
       {
-        // Dùng tsconfig riêng cho test để bật isolatedModules
-        // → tăng tốc compile đáng kể (mỗi file compile độc lập)
-        tsconfig: {
-          isolatedModules: true,
-        },
+        // Dùng tsconfig riêng cho test — bao gồm cả thư mục tests/
+        // và bật isolatedModules → tăng tốc compile đáng kể
+        tsconfig: "tsconfig.test.json",
       },
     ],
   },

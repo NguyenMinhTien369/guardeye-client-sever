@@ -1,15 +1,6 @@
-import { AgentConfig } from "../config/ConfigReader";
+import { AgentConfig, PauseStatusResponse } from "../types/agent.types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-/** Shape của response từ API /api/agent/status */
-interface PauseStatusResponse {
-  paused: boolean;
-  /** ISO 8601 — thời điểm trạng thái này có hiệu lực (optional). */
-  since?: string;
-  /** Lý do tạm dừng (optional, để log). */
-  reason?: string;
-}
 
 export interface PauseControllerOptions {
   config: AgentConfig;

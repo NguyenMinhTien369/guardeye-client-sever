@@ -3,26 +3,7 @@ import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
 import Database from "better-sqlite3";
-import { HistoryEvent } from "../sync/DataBuffer";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type BrowserName = "chrome" | "edge" | "unknown";
-
-interface BrowserProfile {
-  browser: BrowserName;
-  /** Đường dẫn tuyệt đối đến file History (SQLite). */
-  historyPath: string;
-  /** Label để log (vd: "Chrome - Default"). */
-  label: string;
-}
-
-interface ChromiumHistoryRow {
-  url: string;
-  title: string;
-  /** Microseconds since 1601-01-01 (Windows FILETIME epoch). */
-  last_visit_time: number;
-}
+import { HistoryEvent, BrowserProfile, ChromiumHistoryRow } from "../types/agent.types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -117,7 +98,7 @@ export class HistoryReader {
       return [];
     }
 
-    const browserRoots: Array<{ browser: BrowserName; userDataPath: string }> =
+    const browserRoots: Array<{ browser: BrowserProfile["browser"]; userDataPath: string }> =
       [
         {
           browser: "chrome",
@@ -320,7 +301,7 @@ export class HistoryReader {
    */
   private rowToEvent(
     row: ChromiumHistoryRow,
-    browser: BrowserName,
+    browser: BrowserProfile["browser"],
   ): HistoryEvent {
     return {
       type: "history",
