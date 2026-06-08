@@ -3,7 +3,8 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 // Định nghĩa trước các giá trị cho giới tính
 export enum GenderType {
   male = "male",
-  female = "female"
+  female = "female",
+  other = "other",
 }
 
 // -----------------------------------------------------------------------------

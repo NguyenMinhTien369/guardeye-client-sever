@@ -21,10 +21,11 @@ export const createChildSchema = z.object({
     .min(0, "Tuổi không thể nhỏ hơn 0")
     .max(18, "Tuổi không thể lớn hơn 18"),
   gender: z.enum(["male", "female", "other"], {
-    required_error: "Giới tính là bắt buộc",
-    invalid_type_error: "Giới tính không hợp lệ",
+    errorMap: (issue) => {
+      if (issue.code === "invalid_type") return { message: "Giới tính là bắt buộc" };
+      return { message: "Giới tính không hợp lệ" };
+    },
   }),
-  avatar: z.string().optional().default(""),
 });
 
 export const updateChildSchema = z.object({
@@ -40,7 +41,6 @@ export const updateChildSchema = z.object({
     .max(18, "Tuổi không thể lớn hơn 18")
     .optional(),
   gender: z.enum(["male", "female", "other"]).optional(),
-  avatar: z.string().optional(),
 });
 
 // -----------------------------------------------------------------------------
