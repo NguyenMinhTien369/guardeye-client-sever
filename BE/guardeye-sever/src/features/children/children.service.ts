@@ -1,5 +1,5 @@
 import childrenRepository from "./children.repository";
-import { CreateChildDto, UpdateChildDto, ChildResponseDto } from "./children.dto";
+import { CreateChildRequestDto, UpdateChildRequestDto, ChildResponseDto } from "./children.dto";
 import { NotFoundError } from "../../shared/core/error.response";
 import { IChild } from "./children.model";
 
@@ -10,7 +10,7 @@ import { IChild } from "./children.model";
 
 export class ChildrenService {
   /**
-   * Chuyển đổi từ Mongoose document sang DTO sạch.
+   * Chuyển đổi từ Mongoose document sang DTO sạch để trả về client.
    */
   private toResponseDto(child: IChild): ChildResponseDto {
     return {
@@ -18,33 +18,33 @@ export class ChildrenService {
       parentId: child.parentId.toString(),
       name: child.name,
       age: child.age,
-      avatar: child.avatar,
+      gender: child.gender,
       createdAt: child.createdAt,
       updatedAt: child.updatedAt,
     };
   }
 
   /**
-   * Tạo hồ sơ con mới.
+   * Tạo hồ sơ con mới cho phụ huynh.
    */
-  async createChild(parentId: string, data: CreateChildDto): Promise<ChildResponseDto> {
-    const child = await childrenRepository.createChild(parentId, data);
+  async create(parentId: string, data: CreateChildRequestDto): Promise<ChildResponseDto> {
+    const child = await childrenRepository.create({ parentId, ...data });
     return this.toResponseDto(child);
   }
 
   /**
    * Lấy danh sách hồ sơ con của phụ huynh hiện tại.
    */
-  async getChildrenByParent(parentId: string): Promise<ChildResponseDto[]> {
-    const children = await childrenRepository.findByParentId(parentId);
+  async getAll(parentId: string): Promise<ChildResponseDto[]> {
+    const children = await childrenRepository.findAllByParent(parentId);
     return children.map((child) => this.toResponseDto(child));
   }
 
   /**
-   * Lấy chi tiết hồ sơ con.
+   * Lấy chi tiết hồ sơ con theo ID — chỉ trả về con của đúng phụ huynh.
    */
-  async getChildById(parentId: string, childId: string): Promise<ChildResponseDto> {
-    const child = await childrenRepository.findOneByParentAndId(parentId, childId);
+  async getById(childId: string, parentId: string): Promise<ChildResponseDto> {
+    const child = await childrenRepository.findByIdAndParent(childId, parentId);
     if (!child) {
       throw new NotFoundError("Không tìm thấy hồ sơ của bé");
     }
@@ -52,14 +52,14 @@ export class ChildrenService {
   }
 
   /**
-   * Cập nhật hồ sơ con.
+   * Cập nhật hồ sơ con — chỉ cho phép phụ huynh sở hữu chỉnh sửa.
    */
-  async updateChild(
-    parentId: string,
+  async update(
     childId: string,
-    data: UpdateChildDto
+    parentId: string,
+    data: UpdateChildRequestDto
   ): Promise<ChildResponseDto> {
-    const child = await childrenRepository.updateChild(parentId, childId, data);
+    const child = await childrenRepository.updateByIdAndParent(childId, parentId, data);
     if (!child) {
       throw new NotFoundError("Không tìm thấy hồ sơ của bé để cập nhật");
     }
@@ -67,10 +67,10 @@ export class ChildrenService {
   }
 
   /**
-   * Xóa hồ sơ con.
+   * Xóa hồ sơ con — chỉ cho phép phụ huynh sở hữu thực hiện.
    */
-  async deleteChild(parentId: string, childId: string): Promise<void> {
-    const child = await childrenRepository.deleteChild(parentId, childId);
+  async remove(childId: string, parentId: string): Promise<void> {
+    const child = await childrenRepository.deleteByIdAndParent(childId, parentId);
     if (!child) {
       throw new NotFoundError("Không tìm thấy hồ sơ của bé để xóa");
     }

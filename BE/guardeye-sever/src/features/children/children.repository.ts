@@ -1,5 +1,5 @@
 import Child, { IChild } from "./children.model";
-import { CreateChildDto, UpdateChildDto } from "./children.dto";
+import { CreateChildRequestDto, UpdateChildRequestDto } from "./children.dto";
 
 // -----------------------------------------------------------------------------
 // CHILDREN REPOSITORY
@@ -14,21 +14,18 @@ export class ChildrenRepository {
   /**
    * Tạo hồ sơ con mới liên kết với Parent ID.
    */
-  async createChild(parentId: string, data: CreateChildDto): Promise<IChild> {
-    const child = new Child({
-      parentId,
-      ...data,
-    });
+  async create(data: { parentId: string } & CreateChildRequestDto): Promise<IChild> {
+    const child = new Child(data);
     return child.save();
   }
 
   /**
-   * Cập nhật thông tin hồ sơ con.
+   * Cập nhật thông tin hồ sơ con theo ID và Parent ID.
    */
-  async updateChild(
-    parentId: string,
+  async updateByIdAndParent(
     childId: string,
-    data: UpdateChildDto
+    parentId: string,
+    data: UpdateChildRequestDto
   ): Promise<IChild | null> {
     return Child.findOneAndUpdate(
       { _id: childId, parentId },
@@ -38,9 +35,9 @@ export class ChildrenRepository {
   }
 
   /**
-   * Xóa hồ sơ con.
+   * Xóa hồ sơ con theo ID và Parent ID.
    */
-  async deleteChild(parentId: string, childId: string): Promise<IChild | null> {
+  async deleteByIdAndParent(childId: string, parentId: string): Promise<IChild | null> {
     return Child.findOneAndDelete({ _id: childId, parentId });
   }
 
@@ -51,22 +48,15 @@ export class ChildrenRepository {
   /**
    * Tìm tất cả hồ sơ con thuộc về một phụ huynh.
    */
-  async findByParentId(parentId: string): Promise<IChild[]> {
+  async findAllByParent(parentId: string): Promise<IChild[]> {
     return Child.find({ parentId });
   }
 
   /**
-   * Tìm hồ sơ con theo ID và Parent ID để bảo mật thông tin.
+   * Tìm hồ sơ con theo ID và Parent ID — đảm bảo phụ huynh chỉ thấy con mình.
    */
-  async findOneByParentAndId(parentId: string, childId: string): Promise<IChild | null> {
+  async findByIdAndParent(childId: string, parentId: string): Promise<IChild | null> {
     return Child.findOne({ _id: childId, parentId });
-  }
-
-  /**
-   * Tìm theo ID chung.
-   */
-  async findById(childId: string): Promise<IChild | null> {
-    return Child.findById(childId);
   }
 }
 

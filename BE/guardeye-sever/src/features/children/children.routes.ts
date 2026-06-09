@@ -14,18 +14,18 @@ const router = Router();
 router.use(authenticate);
 
 // POST /children/
-router.post("/", validate(createChildSchema), childrenController.createChild);
+router.post("/", validate(createChildSchema), childrenController.create);
 
 // GET /children/
-router.get("/", childrenController.getChildren);
+router.get("/", childrenController.getAll);
 
 // GET /children/:id
-router.get("/:id", childrenController.getChildById);
+router.get("/:id", childrenController.getById);
 
 // PUT /children/:id
-router.put("/:id", validate(updateChildSchema), childrenController.updateChild);
+router.put("/:id", validate(updateChildSchema), childrenController.update);
 
 // DELETE /children/:id
-router.delete("/:id", childrenController.deleteChild);
+router.delete("/:id", childrenController.remove);
 
 export default router;
