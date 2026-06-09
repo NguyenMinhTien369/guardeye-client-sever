@@ -166,6 +166,92 @@
           }
         }
       ]
+    },
+    {
+      "name": "Children",
+      "item": [
+        {
+          "name": "Create Child",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyen Van An\",\n  \"age\": 7,\n  \"gender\": \"male\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/children"
+          }
+        },
+        {
+          "name": "Get All Children",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/children"
+          }
+        },
+        {
+          "name": "Get Child By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/children/{{childId}}"
+          }
+        },
+        {
+          "name": "Update Child",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyen Van An Updated\",\n  \"age\": 8\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/children/{{childId}}"
+          }
+        },
+        {
+          "name": "Delete Child",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/children/{{childId}}"
+          }
+        }
+      ]
     }
   ]
 }
