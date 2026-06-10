@@ -1,0 +1,146 @@
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import {
+  FiGrid,
+  FiLogOut,
+  FiUser,
+  FiChevronRight,
+} from "react-icons/fi";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { PageSkeleton } from "./PageSkeleton";
+
+export function DashboardLayout() {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Trigger skeleton loader on route change
+  useEffect(() => {
+    setIsNavigating(true);
+    const timer = setTimeout(() => {
+      setIsNavigating(false);
+    }, 600); // Artificial delay to show skeleton
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast.success("Đã đăng xuất thành công");
+    } catch (error) {
+      console.error("Logout error", error);
+      toast.error("Đăng xuất thất bại");
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutModal(false);
+    }
+  };
+
+  const navItems = [
+    { name: "Dashboard", path: "/dashboard", icon: FiGrid },
+    // thêm các mục khác nếu cần, ví dụ:
+    // { name: "Activity", path: "/activity", icon: FiActivity },
+    // { name: "Alerts", path: "/alerts", icon: FiBell },
+  ];
+
+  return (
+    <div className="app-container">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo-title">
+            <img src="/favicon.svg" alt="GuardEye Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} /> 
+            GuardEye
+          </div>
+          <div className="sidebar-logo-subtitle">Vigilant Clarity</div>
+        </div>
+
+        <nav className="sidebar-nav">
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-item ${isActive ? "active" : ""}`}
+              >
+                <Icon className="nav-icon" />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar-footer">
+          {user && (
+            <div className="sidebar-user-card">
+              <div className="user-avatar-wrapper">
+                <div className="user-avatar">
+                  <FiUser />
+                </div>
+                <div className="user-avatar-badge"></div>
+              </div>
+              <div className="user-details">
+                <span className="user-name">{user.name}</span>
+              </div>
+              <FiChevronRight className="user-arrow" />
+            </div>
+          )}
+
+          <div className="sidebar-divider"></div>
+
+          <button
+            className="sidebar-logout-btn"
+            onClick={() => setShowLogoutModal(true)}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <span className="btn-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderTopColor: 'var(--text-secondary)' }}></span>
+            ) : (
+              <FiLogOut className="btn-icon" />
+            )}
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="main-content">
+        {isNavigating ? <PageSkeleton /> : <Outlet />}
+      </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 className="modal-title">Xác nhận đăng xuất</h3>
+            <p className="modal-text">Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?</p>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setShowLogoutModal(false)} 
+                disabled={isLoggingOut}
+                style={{ padding: '0.6rem 1rem' }}
+              >
+                Hủy
+              </button>
+              <button 
+                className="btn btn-danger" 
+                onClick={confirmLogout} 
+                disabled={isLoggingOut}
+                style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                {isLoggingOut ? <span className="btn-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></span> : "Đăng xuất"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
