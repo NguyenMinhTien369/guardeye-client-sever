@@ -15,9 +15,9 @@ export class DevicesRepository {
    * Tạo thiết bị mới — nhận đầy đủ data đã được service chuẩn bị (kể cả deviceToken).
    */
   async create(data: {
-    parentId:       string;
-    childId:        string;
-    deviceToken:    string;
+    parentId:    string;
+    childId:     string;
+    deviceToken: string;
   } & CreateDeviceRequestDto): Promise<IDevice> {
     const device = new Device(data);
     return device.save();
@@ -28,6 +28,44 @@ export class DevicesRepository {
    */
   async deleteByIdAndParent(deviceId: string, parentId: string): Promise<IDevice | null> {
     return Device.findOneAndDelete({ _id: deviceId, parentId });
+  }
+
+  /**
+   * Cập nhật trạng thái pause — set isPaused, pausedSince, pausedUntil.
+   */
+  async pauseDevice(
+    deviceId:    string,
+    pausedSince: Date,
+    pausedUntil: Date | null
+  ): Promise<IDevice | null> {
+    return Device.findByIdAndUpdate(
+      deviceId,
+      {
+        $set: {
+          isPaused:    true,
+          pausedSince,
+          pausedUntil,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  /**
+   * Xóa trạng thái pause — reset về mặc định khi phụ huynh mở lại giám sát.
+   */
+  async resumeDevice(deviceId: string): Promise<IDevice | null> {
+    return Device.findByIdAndUpdate(
+      deviceId,
+      {
+        $set: {
+          isPaused:    false,
+          pausedSince: null,
+          pausedUntil: null,
+        },
+      },
+      { new: true }
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -53,14 +91,6 @@ export class DevicesRepository {
    */
   async findByChildId(childId: string): Promise<IDevice | null> {
     return Device.findOne({ childId });
-  }
-
-  /**
-   * Tìm thiết bị theo ID và lấy kèm deviceToken (select: false nên phải chỉ định rõ).
-   * Chỉ dùng nội bộ — KHÔNG bao giờ trả kết quả trực tiếp ra controller.
-   */
-  async findByIdWithToken(deviceId: string): Promise<IDevice | null> {
-    return Device.findById(deviceId).select("+deviceToken");
   }
 }
 

@@ -6,6 +6,8 @@ import {
   CreateDeviceRequestDto,
   CreateDeviceResponseDto,
   DeviceResponseDto,
+  PauseDeviceRequestDto,
+  PauseResumeDeviceResponseDto,
 } from "./devices.dto";
 import { IDevice } from "./devices.model";
 import { BadRequestError, NotFoundError } from "../../shared/core/error.response";
@@ -59,7 +61,7 @@ export class DevicesService {
       };
 
       fs.writeFileSync(AGENT_CONFIG_PATH, JSON.stringify(updated, null, 2), "utf-8");
-      console.log(`[DEV] agent/config.json đã được cập nhật với deviceToken mới.`);
+      console.log("[DEV] agent/config.json đã được cập nhật với deviceToken mới.");
     } catch (err) {
       // Không throw — lỗi ghi config không nên làm fail cả request tạo thiết bị
       console.warn("[DEV] Không thể ghi agent/config.json:", err);
@@ -75,14 +77,16 @@ export class DevicesService {
    * Ở môi trường development: tự động ghi token vào agent/config.json
    */
   async create(
-    parentId:   string,
-    childId:    string,
-    data:       CreateDeviceRequestDto
+    parentId: string,
+    childId:  string,
+    data:     CreateDeviceRequestDto
   ): Promise<CreateDeviceResponseDto> {
     // Kiểm tra quan hệ 1-1: một trẻ chỉ được gắn đúng 1 thiết bị
     const existing = await devicesRepository.findByChildId(childId);
     if (existing) {
-      throw new BadRequestError("Trẻ này đã có thiết bị được đăng ký. Mỗi trẻ chỉ có thể gắn một thiết bị.");
+      throw new BadRequestError(
+        "Trẻ này đã có thiết bị được đăng ký. Mỗi trẻ chỉ có thể gắn một thiết bị."
+      );
     }
 
     // Server tự sinh UUID — client không được tự đặt token
@@ -99,7 +103,7 @@ export class DevicesService {
     this.writeAgentConfig(deviceToken, device.monitoredUsers);
 
     return {
-      deviceToken,                        // Trả về DUY NHẤT 1 LẦN — sau này không thể lấy lại
+      deviceToken,                         // Trả về DUY NHẤT 1 LẦN — sau này không thể lấy lại
       monitoredUsers: device.monitoredUsers,
       device:         this.toResponseDto(device),
       message:        "Đăng ký thiết bị thành công. Hãy sao chép deviceToken vào agent trước khi đóng trang này.",
@@ -112,6 +116,63 @@ export class DevicesService {
   async getAll(parentId: string): Promise<DeviceResponseDto[]> {
     const devices = await devicesRepository.findAllByParent(parentId);
     return devices.map((d) => this.toResponseDto(d));
+  }
+
+  /**
+   * Tạm dừng giám sát thiết bị.
+   * - Không truyền pausedUntil → pause vô thời hạn (mở lại bằng tay)
+   * - Truyền pausedUntil → agent tự động resume khi hết giờ
+   */
+  async pause(
+    deviceId: string,
+    parentId: string,
+    dto:      PauseDeviceRequestDto
+  ): Promise<PauseResumeDeviceResponseDto> {
+    // Xác minh ownership trước khi cho phép thao tác
+    const device = await devicesRepository.findByIdAndParent(deviceId, parentId);
+    if (!device) {
+      throw new NotFoundError("Không tìm thấy thiết bị");
+    }
+
+    const pausedSince = new Date();
+    // Nếu có deadline → parse sang Date; không có → null (vô thời hạn)
+    const pausedUntil = dto.pausedUntil ? new Date(dto.pausedUntil) : null;
+
+    const updated = await devicesRepository.pauseDevice(deviceId, pausedSince, pausedUntil);
+    if (!updated) {
+      throw new NotFoundError("Không tìm thấy thiết bị để tạm dừng");
+    }
+
+    return {
+      device:  this.toResponseDto(updated),
+      message: pausedUntil
+        ? `Thiết bị đã được tạm dừng đến ${pausedUntil.toISOString()}.`
+        : "Thiết bị đã được tạm dừng.",
+    };
+  }
+
+  /**
+   * Tiếp tục giám sát sau khi tạm dừng — reset toàn bộ trạng thái pause.
+   */
+  async resume(
+    deviceId: string,
+    parentId: string
+  ): Promise<PauseResumeDeviceResponseDto> {
+    // Xác minh ownership trước khi cho phép thao tác
+    const device = await devicesRepository.findByIdAndParent(deviceId, parentId);
+    if (!device) {
+      throw new NotFoundError("Không tìm thấy thiết bị");
+    }
+
+    const updated = await devicesRepository.resumeDevice(deviceId);
+    if (!updated) {
+      throw new NotFoundError("Không tìm thấy thiết bị để tiếp tục");
+    }
+
+    return {
+      device:  this.toResponseDto(updated),
+      message: "Thiết bị đã được tiếp tục giám sát.",
+    };
   }
 
   /**
