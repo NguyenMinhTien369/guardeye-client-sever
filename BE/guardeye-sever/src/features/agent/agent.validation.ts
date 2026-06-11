@@ -162,7 +162,9 @@ export function validateQuery(schema: ZodSchema) {
       return;
     }
 
-    req.query = result.data as typeof req.query;
+    // KHÔNG gán lại req.query — trong Node.js mới, req.query là getter (read-only)
+    // trên IncomingMessage. Gán lại sẽ gây TypeError → 500.
+    // validateQuery chỉ cần CHẶN request xấu, không cần normalize lại query.
     next();
   };
 }
