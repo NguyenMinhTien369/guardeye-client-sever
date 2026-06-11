@@ -278,16 +278,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/children/{{childId}}/devices",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "children",
-                "{{childId}}",
-                "devices"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "children", "{{childId}}", "devices"]
             }
           },
           "response": []
@@ -305,14 +297,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/devices",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "devices"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices"]
             }
           },
           "response": []
@@ -339,16 +325,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/pause",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "devices",
-                "{{deviceId}}",
-                "pause"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "{{deviceId}}", "pause"]
             }
           },
           "response": []
@@ -366,16 +344,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/resume",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "devices",
-                "{{deviceId}}",
-                "resume"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "{{deviceId}}", "resume"]
             }
           },
           "response": []
@@ -393,16 +363,400 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "devices",
-                "{{deviceId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "{{deviceId}}"]
             }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agent",
+      "description": "Các endpoint dành riêng cho Agent (desktop client).\nXác thực bằng X-Device-Token header, KHÔNG dùng Bearer JWT.",
+      "item": [
+        {
+          "name": "Sync Events",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Gán deviceToken vào header trước khi gửi",
+                  "pm.request.headers.add({",
+                  "  key: 'X-Device-Token',",
+                  "  value: pm.environment.get('deviceToken')",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success = true\", () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "pm.test(\"savedCount là số\", () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.savedCount).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Device-Token",
+                "value": "{{deviceToken}}",
+                "type": "text",
+                "description": "Token định danh thiết bị — lấy từ response Create Device"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"{{deviceToken}}\",\n  \"sentAt\": \"{{$isoTimestamp}}\",\n  \"eventCount\": 2,\n  \"events\": [\n    {\n      \"type\": \"window\",\n      \"timestamp\": \"2026-06-10T09:00:00.000Z\",\n      \"title\": \"YouTube - Google Chrome\",\n      \"processName\": \"chrome.exe\",\n      \"isIncognito\": false\n    },\n    {\n      \"type\": \"history\",\n      \"timestamp\": \"2026-06-10T09:00:00.000Z\",\n      \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n      \"title\": \"Rick Astley - Never Gonna Give You Up\",\n      \"browser\": \"chrome\",\n      \"visitTime\": \"2026-06-10T08:58:00.000Z\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "sync"]
+            },
+            "description": "Agent gửi batch events lên server.\n\n**Header bắt buộc:** `X-Device-Token: <deviceToken>`\n\n**Validation:**\n- `eventCount` phải khớp chính xác với `events.length`\n- Mỗi event phải có đúng `type` = `\"window\"` hoặc `\"history\"`\n- `timestamp`, `sentAt`, `visitTime` phải là ISO 8601\n- `browser` chỉ nhận: `\"chrome\"`, `\"edge\"`, `\"unknown\"`\n\n**Response thành công (200):**\n```json\n{\n  \"success\": true,\n  \"message\": \"Đồng bộ thành công: đã lưu 2 sự kiện\",\n  \"data\": {\n    \"success\": true,\n    \"savedCount\": 2,\n    \"windowCount\": 1,\n    \"historyCount\": 1\n  }\n}\n```"
+          },
+          "response": [
+            {
+              "name": "200 - Sync thành công",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "X-Device-Token", "value": "abc-device-token-123" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"deviceToken\": \"abc-device-token-123\",\n  \"sentAt\": \"2026-06-10T09:00:00.000Z\",\n  \"eventCount\": 1,\n  \"events\": [\n    {\n      \"type\": \"window\",\n      \"timestamp\": \"2026-06-10T09:00:00.000Z\",\n      \"title\": \"YouTube - Google Chrome\",\n      \"processName\": \"chrome.exe\",\n      \"isIncognito\": false\n    }\n  ]\n}"
+                },
+                "url": "{{baseUrl}}/api/v1/agent/sync"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Đồng bộ thành công: đã lưu 1 sự kiện\",\n  \"data\": {\n    \"success\": true,\n    \"savedCount\": 1,\n    \"windowCount\": 1,\n    \"historyCount\": 0,\n    \"message\": \"Đồng bộ thành công: đã lưu 1 sự kiện\"\n  }\n}"
+            },
+            {
+              "name": "400 - eventCount mismatch",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "X-Device-Token", "value": "abc-device-token-123" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"deviceToken\": \"abc-device-token-123\",\n  \"sentAt\": \"2026-06-10T09:00:00.000Z\",\n  \"eventCount\": 5,\n  \"events\": []\n}"
+                },
+                "url": "{{baseUrl}}/api/v1/agent/sync"
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"message\": \"Dữ liệu không hợp lệ\",\n  \"errors\": {\n    \"eventCount\": \"eventCount không khớp với số lượng events thực tế\"\n  }\n}"
+            },
+            {
+              "name": "401 - Device token không hợp lệ",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "X-Device-Token", "value": "invalid-token" }
+                ],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": "{{baseUrl}}/api/v1/agent/sync"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"message\": \"Device token không hợp lệ\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Agent Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có trường paused\", () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data).to.have.property('paused');",
+                  "  pm.expect(json.data.paused).to.be.a('boolean');",
+                  "});",
+                  "// Tự động lưu trạng thái pause để dùng trong script Agent",
+                  "const json = pm.response.json();",
+                  "if (json && json.data) {",
+                  "  pm.environment.set('agentPaused', json.data.paused);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-Token",
+                "value": "{{deviceToken}}",
+                "type": "text",
+                "description": "Token định danh thiết bị — ưu tiên hơn query param"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "status"],
+              "query": [
+                {
+                  "key": "deviceToken",
+                  "value": "{{deviceToken}}",
+                  "description": "Fallback nếu không truyền được header",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Agent poll trạng thái pause định kỳ (mặc định mỗi 30 giây).\n\n**Header ưu tiên:** `X-Device-Token: <deviceToken>`  \n**Query fallback:** `?deviceToken=<token>`\n\n**Response (200):**\n```json\n// Không bị pause:\n{\n  \"success\": true,\n  \"data\": { \"paused\": false }\n}\n\n// Đang bị pause:\n{\n  \"success\": true,\n  \"data\": {\n    \"paused\": true,\n    \"since\": \"2026-06-10T08:00:00.000Z\",\n    \"reason\": \"Giờ học tập\"\n  }\n}\n```\n\n**Logic Agent nên làm:**\n- Nếu `paused = true` → dừng thu thập data ngay\n- Nếu `paused = false` → tiếp tục thu thập bình thường"
+          },
+          "response": [
+            {
+              "name": "200 - Không bị pause",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "X-Device-Token", "value": "abc-device-token-123" }],
+                "url": "{{baseUrl}}/api/v1/agent/status"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Lấy trạng thái thành công\",\n  \"data\": {\n    \"paused\": false\n  }\n}"
+            },
+            {
+              "name": "200 - Đang bị pause",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "X-Device-Token", "value": "abc-device-token-123" }],
+                "url": "{{baseUrl}}/api/v1/agent/status"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Lấy trạng thái thành công\",\n  \"data\": {\n    \"paused\": true,\n    \"since\": \"2026-06-10T08:00:00.000Z\",\n    \"reason\": \"Giờ học tập\"\n  }\n}"
+            },
+            {
+              "name": "401 - Thiếu hoặc sai device token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/api/v1/agent/status"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"message\": \"Device token không được cung cấp\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync Events — Window Only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Device-Token",
+                "value": "{{deviceToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"{{deviceToken}}\",\n  \"sentAt\": \"{{$isoTimestamp}}\",\n  \"eventCount\": 3,\n  \"events\": [\n    {\n      \"type\": \"window\",\n      \"timestamp\": \"2026-06-10T08:00:00.000Z\",\n      \"title\": \"Facebook - Google Chrome\",\n      \"processName\": \"chrome.exe\",\n      \"isIncognito\": false\n    },\n    {\n      \"type\": \"window\",\n      \"timestamp\": \"2026-06-10T08:05:00.000Z\",\n      \"title\": \"Private Browsing - Mozilla Firefox\",\n      \"processName\": \"firefox.exe\",\n      \"isIncognito\": true\n    },\n    {\n      \"type\": \"window\",\n      \"timestamp\": \"2026-06-10T08:10:00.000Z\",\n      \"title\": \"Microsoft Word - Assignment.docx\",\n      \"processName\": \"WINWORD.EXE\",\n      \"isIncognito\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "sync"]
+            },
+            "description": "Gửi batch chỉ có WindowEvent (3 sự kiện). Dùng để test riêng tính năng ghi nhận cửa sổ đang active."
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Events — History Only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Device-Token",
+                "value": "{{deviceToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"{{deviceToken}}\",\n  \"sentAt\": \"{{$isoTimestamp}}\",\n  \"eventCount\": 2,\n  \"events\": [\n    {\n      \"type\": \"history\",\n      \"timestamp\": \"2026-06-10T08:00:00.000Z\",\n      \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n      \"title\": \"Rick Astley - Never Gonna Give You Up\",\n      \"browser\": \"chrome\",\n      \"visitTime\": \"2026-06-10T07:58:00.000Z\"\n    },\n    {\n      \"type\": \"history\",\n      \"timestamp\": \"2026-06-10T08:01:00.000Z\",\n      \"url\": \"https://stackoverflow.com/questions/123456\",\n      \"title\": \"How to fix Express TypeScript error - Stack Overflow\",\n      \"browser\": \"edge\",\n      \"visitTime\": \"2026-06-10T07:59:00.000Z\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "sync"]
+            },
+            "description": "Gửi batch chỉ có HistoryEvent (2 sự kiện). Dùng để test riêng tính năng ghi lịch sử duyệt web."
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Events — Empty Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Device-Token",
+                "value": "{{deviceToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"{{deviceToken}}\",\n  \"sentAt\": \"{{$isoTimestamp}}\",\n  \"eventCount\": 0,\n  \"events\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "sync"]
+            },
+            "description": "Gửi batch rỗng. Server nên trả về 200 với savedCount = 0 (không phải lỗi)."
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Events — 401 No Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"\",\n  \"sentAt\": \"2026-06-10T09:00:00.000Z\",\n  \"eventCount\": 0,\n  \"events\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "sync"]
+            },
+            "description": "Test case thiếu X-Device-Token header → expect 401."
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Events — 400 eventCount Mismatch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Device-Token",
+                "value": "{{deviceToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"{{deviceToken}}\",\n  \"sentAt\": \"2026-06-10T09:00:00.000Z\",\n  \"eventCount\": 5,\n  \"events\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "sync"]
+            },
+            "description": "Test case eventCount=5 nhưng events=[] → expect 400 với lỗi eventCount."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Status — Query Param Fallback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agent/status?deviceToken={{deviceToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "agent", "status"],
+              "query": [
+                {
+                  "key": "deviceToken",
+                  "value": "{{deviceToken}}"
+                }
+              ]
+            },
+            "description": "Test fallback: truyền deviceToken qua query param thay vì header.\nHữu ích khi môi trường không cho phép custom header."
           },
           "response": []
         }
