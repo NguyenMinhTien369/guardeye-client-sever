@@ -127,7 +127,7 @@ export class SyncService {
   }
 
   private buildSyncUrl(): string {
-    return `${this.config.serverUrl.replace(/\/$/, "")}/api/agent/sync`;
+    return `${this.config.serverUrl.replace(/\/$/, "")}/api/v1/agent/sync`;
   }
 
   /**
