@@ -132,7 +132,7 @@ export class PauseController {
   private buildStatusUrl(): string {
     // Xóa trailing slash để tránh double-slash
     const base = this.config.serverUrl.replace(/\/$/, "");
-    return `${base}/api/agent/status?deviceToken=${encodeURIComponent(
+    return `${base}/api/v1/agent/status?deviceToken=${encodeURIComponent(
       this.config.deviceToken,
     )}`;
   }

@@ -80,7 +80,7 @@ export interface HistoryEvent {
   /** ISO 8601 — thời điểm Agent đọc được URL này. */
   timestamp: string;
 
-  /** URL đầy đủ (vd: "https://www.youtube.com/watch?v=abc"). */
+  /** URL đầy  đủ (vd: "https://www.youtube.com/watch?v=abc"). */
   url: string;
 
   /** Tiêu đề trang web. */
