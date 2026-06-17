@@ -74,6 +74,7 @@ export interface WindowEvent {
  * HistoryEvent — một URL trong lịch sử duyệt web của Chrome/Edge.
  * Agent đọc từ SQLite của browser mỗi tick.
  */
+//CHốt
 export interface HistoryEvent {
   type: "history";
 

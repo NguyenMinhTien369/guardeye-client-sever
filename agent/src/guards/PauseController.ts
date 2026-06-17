@@ -170,7 +170,7 @@ export class PauseController {
   private async parseResponse(
     response: Response,
   ): Promise<PauseStatusResponse> {
-    let json: unknown;
+    let json: any;
 
     try {
       json = await response.json();
@@ -178,18 +178,21 @@ export class PauseController {
       throw new Error("Response không phải JSON hợp lệ.");
     }
 
+    // Backend bọc response trong object 'data'
+    const data = json?.data;
+    
     // Validate schema tối thiểu
     if (
-      typeof json !== "object" ||
-      json === null ||
-      typeof (json as Record<string, unknown>)["paused"] !== "boolean"
+      typeof data !== "object" ||
+      data === null ||
+      typeof data.paused !== "boolean"
     ) {
       throw new Error(
         `Response schema không hợp lệ: thiếu field "paused" (boolean).`,
       );
     }
 
-    return json as PauseStatusResponse;
+    return data as PauseStatusResponse;
   }
 
   /**
