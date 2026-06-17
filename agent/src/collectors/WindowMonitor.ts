@@ -17,6 +17,8 @@ export interface WindowMonitorOptions {
  * Mỗi lần collect() được gọi từ main loop (5s), trả về một WindowEvent
  * hoặc null nếu không lấy được.
  */
+
+
 export class WindowMonitor {
   private readonly incognitoDetector: IncognitoDetector;
 
@@ -44,7 +46,7 @@ export class WindowMonitor {
         return null;
       }
 
-      const title = win.title ?? "";
+      const title = win.title || "Unknown";
       const processName = this.extractProcessName(win);
 
       // Dedup — chỉ emit event khi cửa sổ thực sự thay đổi

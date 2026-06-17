@@ -177,8 +177,9 @@ export class SyncService {
       this.stats.lastSyncAt = new Date();
       this.stats.lastFailureReason = null;
 
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
       console.log(
-        `[SyncService] ✓ Sync thành công: ${eventCount} events` +
+        `[SyncService] [${timeStr}] ✓ Sync thành công: ${eventCount} events` +
           (body?.savedCount !== undefined
             ? ` (server saved: ${body.savedCount})`
             : ""),
