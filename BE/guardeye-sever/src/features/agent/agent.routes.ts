@@ -27,7 +27,7 @@ const router = Router();
 // Body: SyncRequestDto { deviceToken, sentAt, eventCount, events[] }
 //
 // Response:
-//   200 — lưu thành công → { success, savedCount, windowCount, historyCount, message }
+//   200 — lưu thành công → { success, savedCount, message }
 //   400 — body không hợp lệ hoặc eventCount mismatch
 //   401 — deviceToken không hợp lệ
 //   403 — thiết bị bị vô hiệu hóa

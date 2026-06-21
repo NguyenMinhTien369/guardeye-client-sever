@@ -27,7 +27,7 @@ export interface AgentConfig {
 
   /**
    * Interval gửi batch events lên server (milliseconds).
-   * Mặc định: 300_000 (5 phút).
+   * Mặc định: 180_000 (3 phút).
    */
   syncIntervalMs: number;
 
@@ -66,39 +66,14 @@ export interface WindowEvent {
   /** Tên tiến trình (vd: "chrome.exe", "msedge.exe"). */
   processName: string;
 
-  /** Agent phát hiện cửa sổ đang ở chế độ ẩn danh dựa trên title. */
-  isIncognito: boolean;
-}
 
-/**
- * HistoryEvent — một URL trong lịch sử duyệt web của Chrome/Edge.
- * Agent đọc từ SQLite của browser mỗi tick.
- */
-//CHốt
-export interface HistoryEvent {
-  type: "history";
-
-  /** ISO 8601 — thời điểm Agent đọc được URL này. */
-  timestamp: string;
-
-  /** URL đầy  đủ (vd: "https://www.youtube.com/watch?v=abc"). */
-  url: string;
-
-  /** Tiêu đề trang web. */
-  title: string;
-
-  /** Trình duyệt ghi nhận URL này. */
-  browser: "chrome" | "edge" | "unknown";
-
-  /** ISO 8601 — thời điểm trình duyệt ghi nhận lượt truy cập (từ SQLite). */
-  visitTime: string;
 }
 
 /**
  * AgentEvent — union type bao gồm mọi loại event Agent có thể gửi.
  * Backend dùng `event.type` để phân loại trước khi lưu vào collection phù hợp.
  */
-export type AgentEvent = WindowEvent | HistoryEvent;
+export type AgentEvent = WindowEvent;
 
 // ════════════════════════════════════════════════════════════════════════════
 // PHẦN 3 — API CONTRACT (Agent ↔ Server)
@@ -172,49 +147,3 @@ export interface PauseStatusResponse {
   reason?: string;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// PHẦN 4 — INTERNAL (Agent tự dùng, Backend không cần quan tâm)
-// Các type phục vụ logic nội bộ của Agent.
-// Được đặt đây để agent.types.ts là file duy nhất cần đọc.
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * IncognitoCheckResult — kết quả kiểm tra chế độ ẩn danh của một cửa sổ.
- * Trả về bởi IncognitoDetector.check(windowTitle).
- */
-export interface IncognitoCheckResult {
-  isIncognito: boolean;
-
-  /** Keyword nào trigger kết quả (dùng để debug/log). null nếu không phát hiện. */
-  matchedKeyword: string | null;
-}
-
-/**
- * BrowserProfile — đại diện cho một profile của Chrome hoặc Edge.
- * HistoryReader discover các profile này trên máy người dùng.
- */
-export interface BrowserProfile {
-  /** Trình duyệt của profile này. */
-  browser: "chrome" | "edge" | "unknown";
-
-  /** Đường dẫn tuyệt đối đến file History (SQLite) của profile. */
-  historyPath: string;
-
-  /** Label để ghi log (vd: "Chrome - Default", "Edge - Profile 1"). */
-  label: string;
-}
-
-/**
- * ChromiumHistoryRow — một row từ bảng `urls` trong SQLite của Chrome/Edge.
- * Dùng nội bộ bởi HistoryReader khi query DB.
- *
- * Lưu ý: last_visit_time là microseconds kể từ 1601-01-01 (Windows FILETIME),
- * không phải Unix timestamp thông thường.
- */
-export interface ChromiumHistoryRow {
-  url: string;
-  title: string;
-
-  /** Microseconds kể từ 1601-01-01 00:00:00 UTC (Windows FILETIME epoch). */
-  last_visit_time: number;
-}

@@ -30,7 +30,7 @@ const VALID_CONFIG: AgentConfig = {
   deviceToken: "test-device-token-abc123",
   serverUrl: "https://api.example.com",
   monitoredUsers: ["alice", "bob"],
-  syncIntervalMs: 300_000,
+  syncIntervalMs: 180_000,
   mainLoopIntervalMs: 5_000,
   pausePollIntervalMs: 30_000,
 };
@@ -114,7 +114,7 @@ describe("ConfigReader", () => {
       const config = reader.load();
 
       // Các giá trị mặc định phải được điền vào
-      expect(config.syncIntervalMs).toBe(300_000);
+      expect(config.syncIntervalMs).toBe(180_000);
       expect(config.mainLoopIntervalMs).toBe(5_000);
       expect(config.pausePollIntervalMs).toBe(30_000);
     });
