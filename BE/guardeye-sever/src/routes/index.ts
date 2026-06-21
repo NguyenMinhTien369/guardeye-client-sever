@@ -4,11 +4,15 @@ import childrenRoutes from "../features/children/children.routes";
 import devicesRoutes, { devicesByChildRouter } from "../features/devices/devices.routes";
 import agentRoutes from "../features/agent/agent.routes";
 // import tradeRoutes from '../features/trade/trade.routes';
+import aiRoutes from '../features/ai/ai.routes'; // Import router AI
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/children", childrenRoutes);
+
+// Thêm route AI vào hệ thống
+router.use('/ai', aiRoutes);
 
 // POST /api/v1/children/:childId/devices
 router.use("/children/:childId/devices", devicesByChildRouter);
