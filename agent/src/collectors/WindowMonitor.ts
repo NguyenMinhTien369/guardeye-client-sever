@@ -1,12 +1,10 @@
 import activeWin, { Result as ActiveWinResult } from "active-win";
 import { WindowEvent } from "../types/agent.types";
-import { IncognitoDetector } from "./IncognitoDetector";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface WindowMonitorOptions {
-  incognitoDetector?: IncognitoDetector;
-}
+export interface WindowMonitorOptions {}
 
 // ─── Class ────────────────────────────────────────────────────────────────────
 
@@ -20,15 +18,10 @@ export interface WindowMonitorOptions {
 
 
 export class WindowMonitor {
-  private readonly incognitoDetector: IncognitoDetector;
-
   /** Title của lần collect trước — tránh đẩy event trùng lặp vào buffer. */
   private lastWindowTitle: string | null = null;
 
-  constructor(options: WindowMonitorOptions = {}) {
-    this.incognitoDetector =
-      options.incognitoDetector ?? new IncognitoDetector();
-  }
+  constructor(_options: WindowMonitorOptions = {}) {}
 
   // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -55,14 +48,11 @@ export class WindowMonitor {
       }
       this.lastWindowTitle = title;
 
-      const { isIncognito } = this.incognitoDetector.check(title);
-
       const event: WindowEvent = {
         type: "window",
         timestamp: new Date().toISOString(),
         title,
         processName,
-        isIncognito,
       };
 
       return event;
