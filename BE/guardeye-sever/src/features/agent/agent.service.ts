@@ -2,15 +2,14 @@
 
 // -----------------------------------------------------------------------------
 // AGENT SERVICE — business logic cho sync events và get agent status.
-// Phân loại events theo type, ủy thác lưu DB cho Repository.
+// Ủy thác lưu DB cho Repository.
+// HistoryEvent đã được loại bỏ khỏi Agent — chỉ xử lý WindowEvent.
 // -----------------------------------------------------------------------------
 
 import agentRepository from "./agent.repository";
 import {
   SyncRequestDto,
-  AgentEventDto,
   WindowEventDto,
-  HistoryEventDto,
   SyncResponseDto,
   AgentStatusResponseDto,
 } from "./agent.dto";
@@ -19,14 +18,9 @@ import {
 // HELPERS
 // -----------------------------------------------------------------------------
 
-/** Lọc ra window events từ mảng event hỗn hợp */
-function filterWindowEvents(events: AgentEventDto[]): WindowEventDto[] {
+/** Lọc ra window events từ mảng event (type guard) */
+function filterWindowEvents(events: SyncRequestDto["events"]): WindowEventDto[] {
   return events.filter((e): e is WindowEventDto => e.type === "window");
-}
-
-/** Lọc ra history events từ mảng event hỗn hợp */
-function filterHistoryEvents(events: AgentEventDto[]): HistoryEventDto[] {
-  return events.filter((e): e is HistoryEventDto => e.type === "history");
 }
 
 // -----------------------------------------------------------------------------
@@ -36,7 +30,7 @@ function filterHistoryEvents(events: AgentEventDto[]): HistoryEventDto[] {
 const agentService = {
   /**
    * Xử lý batch sync events từ Agent.
-   * Phân loại → lưu song song qua Repository → trả SyncResponseDto.
+   * Chỉ có WindowEvent — lưu qua Repository → trả SyncResponseDto.
    */
   async syncEvents(
     dto: SyncRequestDto,
@@ -44,25 +38,15 @@ const agentService = {
     ownerId: string,
   ): Promise<SyncResponseDto> {
     const windowEvents = filterWindowEvents(dto.events);
-    const historyEvents = filterHistoryEvents(dto.events);
 
-    // Lưu song song — nếu một bên fail thì throw và caller xử lý
-    const [windowCount, historyCount] = await Promise.all([
+    const savedCount =
       windowEvents.length > 0
-        ? agentRepository.bulkInsertWindowEvents(windowEvents, deviceId, ownerId)
-        : Promise.resolve(0),
-      historyEvents.length > 0
-        ? agentRepository.bulkInsertHistoryEvents(historyEvents, deviceId, ownerId)
-        : Promise.resolve(0),
-    ]);
-
-    const savedCount = windowCount + historyCount;
+        ? await agentRepository.bulkInsertWindowEvents(windowEvents, deviceId, ownerId)
+        : 0;
 
     return {
       success: true,
       savedCount,
-      windowCount,
-      historyCount,
       message: `Đồng bộ thành công: đã lưu ${savedCount} sự kiện`,
     };
   },

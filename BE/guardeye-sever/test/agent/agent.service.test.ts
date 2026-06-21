@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 // Agent Service tests — kiểm tra business logic của AgentService.
 // Toàn bộ Repository và Model đều được mock — không gọi DB thật.
+// HistoryEvent đã được loại bỏ — chỉ test WindowEvent.
 // -----------------------------------------------------------------------------
 
 // Phải mock trước khi import module cần test
@@ -28,18 +29,6 @@ function buildWindowEventDto() {
     timestamp: "2025-01-01T10:00:00.000Z",
     title: "YouTube - Google Chrome",
     processName: "chrome.exe",
-    isIncognito: false,
-  };
-}
-
-function buildHistoryEventDto() {
-  return {
-    type: "history" as const,
-    timestamp: "2025-01-01T10:00:00.000Z",
-    url: "https://www.youtube.com/watch?v=abc",
-    title: "YouTube",
-    browser: "chrome" as const,
-    visitTime: "2025-01-01T09:55:00.000Z",
   };
 }
 
@@ -75,7 +64,6 @@ describe("AgentService", () => {
       // Arrange
       const dto = buildSyncDto();
       mockRepo.bulkInsertWindowEvents.mockResolvedValue(1);
-      mockRepo.bulkInsertHistoryEvents.mockResolvedValue(0);
 
       // Act
       const result = await agentService.syncEvents(dto, deviceId, ownerId);
@@ -85,40 +73,10 @@ describe("AgentService", () => {
       expect(result.savedCount).toBe(1);
     });
 
-    it("should separate window events and history events before inserting", async () => {
-      // Arrange
-      const dto = buildSyncDto({
-        events: [buildWindowEventDto(), buildHistoryEventDto()],
-        eventCount: 2,
-      });
-      mockRepo.bulkInsertWindowEvents.mockResolvedValue(1);
-      mockRepo.bulkInsertHistoryEvents.mockResolvedValue(1);
-
-      // Act
-      await agentService.syncEvents(dto, deviceId, ownerId);
-
-      // Assert
-      expect(mockRepo.bulkInsertWindowEvents).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ type: "window" }),
-        ]),
-        deviceId,
-        ownerId
-      );
-      expect(mockRepo.bulkInsertHistoryEvents).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ type: "history" }),
-        ]),
-        deviceId,
-        ownerId
-      );
-    });
-
     it("should call bulkInsertWindowEvents with correct deviceId and ownerId", async () => {
       // Arrange
       const dto = buildSyncDto();
       mockRepo.bulkInsertWindowEvents.mockResolvedValue(1);
-      mockRepo.bulkInsertHistoryEvents.mockResolvedValue(0);
 
       // Act
       await agentService.syncEvents(dto, deviceId, ownerId);
@@ -131,48 +89,38 @@ describe("AgentService", () => {
       );
     });
 
-    it("should skip bulkInsertWindowEvents when there are no window events", async () => {
-      // Arrange — chỉ có history event
-      const dto = buildSyncDto({
-        events: [buildHistoryEventDto()],
-        eventCount: 1,
-      });
-      mockRepo.bulkInsertHistoryEvents.mockResolvedValue(1);
-
-      // Act
-      await agentService.syncEvents(dto, deviceId, ownerId);
-
-      // Assert
-      expect(mockRepo.bulkInsertWindowEvents).not.toHaveBeenCalled();
-    });
-
-    it("should skip bulkInsertHistoryEvents when there are no history events", async () => {
-      // Arrange — chỉ có window event
-      const dto = buildSyncDto();
-      mockRepo.bulkInsertWindowEvents.mockResolvedValue(1);
-
-      // Act
-      await agentService.syncEvents(dto, deviceId, ownerId);
-
-      // Assert
-      expect(mockRepo.bulkInsertHistoryEvents).not.toHaveBeenCalled();
-    });
-
-    it("should return windowCount and historyCount matching the saved events", async () => {
+    it("should call bulkInsertWindowEvents with all window events", async () => {
       // Arrange
       const dto = buildSyncDto({
-        events: [buildWindowEventDto(), buildHistoryEventDto()],
+        events: [buildWindowEventDto(), buildWindowEventDto()],
         eventCount: 2,
       });
-      mockRepo.bulkInsertWindowEvents.mockResolvedValue(1);
-      mockRepo.bulkInsertHistoryEvents.mockResolvedValue(1);
+      mockRepo.bulkInsertWindowEvents.mockResolvedValue(2);
+
+      // Act
+      await agentService.syncEvents(dto, deviceId, ownerId);
+
+      // Assert
+      expect(mockRepo.bulkInsertWindowEvents).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ type: "window" }),
+        ]),
+        deviceId,
+        ownerId
+      );
+    });
+
+    it("should skip bulkInsertWindowEvents and return savedCount 0 when events array is empty", async () => {
+      // Arrange
+      const dto = buildSyncDto({ events: [], eventCount: 0 });
 
       // Act
       const result = await agentService.syncEvents(dto, deviceId, ownerId);
 
       // Assert
-      expect(result.windowCount).toBe(1);
-      expect(result.historyCount).toBe(1);
+      expect(mockRepo.bulkInsertWindowEvents).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(result.savedCount).toBe(0);
     });
 
     it("should return savedCount equal to 0 when events array is empty", async () => {
@@ -204,7 +152,6 @@ describe("AgentService", () => {
       // Arrange
       const dto = buildSyncDto();
       mockRepo.bulkInsertWindowEvents.mockResolvedValue(1);
-      mockRepo.bulkInsertHistoryEvents.mockResolvedValue(0);
 
       // Act
       const result = await agentService.syncEvents(dto, deviceId, ownerId);

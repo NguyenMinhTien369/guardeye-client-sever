@@ -2,7 +2,10 @@
 
 // -----------------------------------------------------------------------------
 // AGENT DTO - Định nghĩa cấu trúc dữ liệu cho luồng Agent ↔ Backend
-// Bao gồm: sync batch events và poll trạng thái pause
+// Đồng bộ với agent.types.ts phía Agent client.
+//
+// Lưu ý: Agent hiện tại chỉ thu thập WindowEvent.
+// HistoryEvent đã được loại bỏ khỏi Agent — không nhận ở đây.
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
@@ -26,42 +29,17 @@ export interface WindowEventDto {
 
   /** Tên tiến trình (vd: "chrome.exe", "msedge.exe") */
   processName: string;
-
-  /** Agent phát hiện cửa sổ đang ở chế độ ẩn danh dựa trên title */
-  isIncognito: boolean;
 }
 
-/**
- * HistoryEventDto — shape của một history event trong payload sync.
- * Ánh xạ 1-1 với HistoryEvent interface trong agent.types.ts.
- */
-export interface HistoryEventDto {
-  type: "history";
-
-  /** ISO 8601 — thời điểm Agent đọc được URL này */
-  timestamp: string;
-
-  /** URL đầy đủ (vd: "https://www.youtube.com/watch?v=abc") */
-  url: string;
-
-  /** Tiêu đề trang web */
-  title: string;
-
-  /** Trình duyệt ghi nhận URL này */
-  browser: "chrome" | "edge" | "unknown";
-
-  /** ISO 8601 — thời điểm trình duyệt ghi nhận lượt truy cập (từ SQLite) */
-  visitTime: string;
-}
-
-/** Union type của tất cả event Agent có thể gửi */
-export type AgentEventDto = WindowEventDto | HistoryEventDto;
+/** Union type của tất cả event Agent có thể gửi (hiện tại chỉ có window) */
+export type AgentEventDto = WindowEventDto;
 
 // ── Sync Request ──────────────────────────────────────────────────────────────
 
 /**
  * SyncRequestDto — body của request POST /api/v1/agent/sync.
  * Agent gửi batch events lên server định kỳ (mặc định mỗi 5 phút).
+ * Đồng bộ với SyncPayload trong agent.types.ts.
  *
  * Header bắt buộc: X-Device-Token: <deviceToken>
  */
@@ -88,7 +66,7 @@ export interface SyncRequestDto {
  * StatusQueryDto — query params của request GET /api/v1/agent/status.
  * Agent poll trạng thái pause định kỳ (mặc định mỗi 30 giây).
  *
- * Header bắt buộc: X-Device-Token: <deviceToken>
+ * Header ưu tiên: X-Device-Token: <deviceToken>
  * Query param (fallback): ?deviceToken=<token>
  */
 export interface StatusQueryDto {
@@ -122,12 +100,6 @@ export interface SyncResponseDto {
    * Có mặt khi success = true.
    */
   savedCount?: number;
-
-  /** Số WindowEvent đã lưu — thông tin bổ sung cho Dashboard/log */
-  windowCount?: number;
-
-  /** Số HistoryEvent đã lưu — thông tin bổ sung cho Dashboard/log */
-  historyCount?: number;
 
   /** Mô tả kết quả. Luôn có mặt — Agent log để debug */
   message?: string;
