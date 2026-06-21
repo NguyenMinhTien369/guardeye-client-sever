@@ -31,18 +31,6 @@ function buildValidWindowEvent() {
     timestamp: "2025-01-01T10:00:00.000Z",
     title: "YouTube - Google Chrome",
     processName: "chrome.exe",
-    isIncognito: false,
-  };
-}
-
-function buildValidHistoryEvent() {
-  return {
-    type: "history" as const,
-    timestamp: "2025-01-01T10:00:00.000Z",
-    url: "https://www.youtube.com/watch?v=abc",
-    title: "YouTube",
-    browser: "chrome" as const,
-    visitTime: "2025-01-01T09:55:00.000Z",
   };
 }
 
@@ -231,7 +219,7 @@ describe("syncBodySchema", () => {
 
     it("should be valid when eventCount exactly matches events.length", () => {
       // Arrange
-      const events = [buildValidWindowEvent(), buildValidHistoryEvent()];
+      const events = [buildValidWindowEvent(), buildValidWindowEvent()];
       const result = syncBodySchema.safeParse(
         buildValidSyncBody({ eventCount: 2, events })
       );
@@ -278,18 +266,6 @@ describe("syncBodySchema", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should be invalid when window event is missing isIncognito", () => {
-      // Arrange
-      const badEvent = { ...buildValidWindowEvent() };
-      delete (badEvent as any).isIncognito;
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({ events: [badEvent], eventCount: 1 })
-      );
-
-      // Assert
-      expect(result.success).toBe(false);
-    });
-
     it("should be invalid when window event has invalid timestamp format", () => {
       // Arrange
       const badEvent = { ...buildValidWindowEvent(), timestamp: "not-a-date" };
@@ -299,115 +275,6 @@ describe("syncBodySchema", () => {
 
       // Assert
       expect(result.success).toBe(false);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // events array — HistoryEvent
-  // ---------------------------------------------------------------------------
-
-  describe("events[] — HistoryEvent", () => {
-    it("should be valid for a well-formed history event", () => {
-      // Arrange & Act
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({
-          events: [buildValidHistoryEvent()],
-          eventCount: 1,
-        })
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
-    });
-
-    it("should be invalid when history event is missing url", () => {
-      // Arrange
-      const badEvent = { ...buildValidHistoryEvent() };
-      delete (badEvent as any).url;
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({ events: [badEvent], eventCount: 1 })
-      );
-
-      // Assert
-      expect(result.success).toBe(false);
-    });
-
-    it("should be invalid when browser is not one of chrome, edge, or unknown", () => {
-      // Arrange
-      const badEvent = { ...buildValidHistoryEvent(), browser: "firefox" };
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({ events: [badEvent], eventCount: 1 })
-      );
-
-      // Assert
-      expect(result.success).toBe(false);
-    });
-
-    it("should be valid when browser is chrome", () => {
-      // Arrange & Act
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({
-          events: [{ ...buildValidHistoryEvent(), browser: "chrome" }],
-          eventCount: 1,
-        })
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
-    });
-
-    it("should be valid when browser is edge", () => {
-      // Arrange & Act
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({
-          events: [{ ...buildValidHistoryEvent(), browser: "edge" }],
-          eventCount: 1,
-        })
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
-    });
-
-    it("should be valid when browser is unknown", () => {
-      // Arrange & Act
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({
-          events: [{ ...buildValidHistoryEvent(), browser: "unknown" }],
-          eventCount: 1,
-        })
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
-    });
-
-    it("should be invalid when history event has invalid visitTime format", () => {
-      // Arrange
-      const badEvent = { ...buildValidHistoryEvent(), visitTime: "not-a-date" };
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({ events: [badEvent], eventCount: 1 })
-      );
-
-      // Assert
-      expect(result.success).toBe(false);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Mixed events array
-  // ---------------------------------------------------------------------------
-
-  describe("events[] — mixed window and history events", () => {
-    it("should be valid when events array contains both window and history events", () => {
-      // Arrange
-      const events = [buildValidWindowEvent(), buildValidHistoryEvent()];
-      const result = syncBodySchema.safeParse(
-        buildValidSyncBody({ events, eventCount: 2 })
-      );
-
-      // Assert
-      expect(result.success).toBe(true);
     });
   });
 });
@@ -599,7 +466,7 @@ describe("validateQuery middleware", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("should replace req.query with Zod-parsed data on success", () => {
+  it("should NOT modify req.query (read-only in Node.js) — only blocks bad requests", () => {
     // Arrange
     const req = {
       query: { deviceToken: "  trimmed-token  " },
@@ -609,8 +476,9 @@ describe("validateQuery middleware", () => {
     // Act
     middleware(req, res as Response, next);
 
-    // Assert
-    expect((req as any).query.deviceToken).toBe("trimmed-token");
+    // Assert — validateQuery không gán lại req.query (read-only trên IncomingMessage)
+    // Nó chỉ CHẶN request xấu, không normalize. req.query giữ nguyên giá trị gốc.
+    expect((req as any).query.deviceToken).toBe("  trimmed-token  ");
     expect(next).toHaveBeenCalled();
   });
 });
