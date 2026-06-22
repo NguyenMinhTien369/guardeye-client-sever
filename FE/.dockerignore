@@ -1,0 +1,21 @@
+# Bỏ qua thư viện local và file log
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bỏ qua các file môi trường chứa thông tin bảo mật
+.env
+.env.*
+
+# Bỏ qua các file tài liệu
+README.md
+
+# Bỏ qua các file cấu hình Git và Linter
+.git
+.gitignore
+eslint.config.js
+
+# Bỏ qua thư mục build local
+dist/
+dist-ssr/

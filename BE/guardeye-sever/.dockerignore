@@ -1,0 +1,28 @@
+# Bỏ qua thư viện local và file log
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bỏ qua các file môi trường chứa thông tin bảo mật
+.env
+.env.*
+
+# Bỏ qua tài liệu và công cụ test API local
+md/
+postman/
+README.md
+
+# Bỏ qua các file và cấu hình liên quan đến Unit Test
+coverage/
+test/
+jest.config.js
+
+# Bỏ qua các file cấu hình Git và Dev local
+.git
+.gitignore
+nodemon.json
+
+# Bỏ qua thư mục build
+dist/
+build/
