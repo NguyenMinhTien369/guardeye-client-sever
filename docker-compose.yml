@@ -1,0 +1,65 @@
+services:
+  # ==========================================
+  # Service Database MongoDB
+  # ==========================================
+  mongodb:
+    image: mongo:7.0
+    container_name: guardeye_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017" # Cho phép kết nối từ máy host (dùng để debug bằng MongoDB Compass)
+    volumes:
+      - mongo_data:/data/db # Lưu data persistent để không mất dữ liệu khi container restart
+    networks:
+      - guardeye_network
+
+  # ==========================================
+  # Service cho Backend
+  # ==========================================
+  backend:
+    build:
+      context: ./BE/guardeye-sever
+      dockerfile: Dockerfile
+    container_name: guardeye_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./BE/guardeye-sever/.env
+    environment:
+      # Override MONGO_URI để trỏ đúng vào service mongodb thay vì localhost
+      - MONGO_URI=mongodb://mongodb:27017/guardeye__db
+    depends_on:
+      - mongodb
+    networks:
+      - guardeye_network
+
+  # ==========================================
+  # Service cho Frontend
+  # ==========================================
+  frontend:
+    build:
+      context: ./FE
+      dockerfile: Dockerfile
+    container_name: guardeye_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - guardeye_network
+
+# ==========================================
+# Volumes để lưu data MongoDB persistent
+# ==========================================
+volumes:
+  mongo_data:
+    driver: local
+
+# ==========================================
+# Network chung cho tất cả các service
+# ==========================================
+networks:
+  guardeye_network:
+    driver: bridge
