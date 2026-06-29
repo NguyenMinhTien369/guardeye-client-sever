@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
 import { ENV } from "./shared/config/env";
 import { errorHandler } from "./shared/middlewares/error.middleware";
 import { NotFoundError } from "./shared/core/error.response";
@@ -17,6 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 if (ENV.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+
+// Serve file ảnh đã upload — URL: /uploads/screenshots/<filename>
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/v1", router);
 
