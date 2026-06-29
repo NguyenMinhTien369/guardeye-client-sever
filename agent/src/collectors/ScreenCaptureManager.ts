@@ -3,36 +3,6 @@
 // =============================================================================
 // SCREEN CAPTURE MANAGER — Chụp màn hình khi browser thay đổi tiêu đề cửa sổ
 // =============================================================================
-//
-// Thiết kế theo khuyến cáo của senior developer:
-//
-//   ✅ DÙNG heuristic "title change" thay vì keylogger
-//   ✅ Upload ảnh TRỰC TIẾP lên server qua multipart/form-data
-//   ✅ KHÔNG nhét ảnh vào DataBuffer (tránh OOM - Out of Memory)
-//   ✅ Dùng isCapturing flag để tránh spam khi chuyển tab liên tục
-//   ✅ startCaptureSequence() là ASYNC, KHÔNG await → không block Main Loop
-//
-// Cách sử dụng trong Main Loop (index.ts):
-//
-//   const BROWSER_PROCESSES = ['chrome.exe', 'msedge.exe', 'firefox.exe', 'brave.exe'];
-//
-//   // Trong runTick():
-//   const windowEvent = await windowMonitor.collect();
-//   if (windowEvent !== null) {
-//     dataBuffer.push(windowEvent);
-//
-//     const procName = windowEvent.processName.toLowerCase();
-//     if (BROWSER_PROCESSES.includes(procName)) {
-//       // KHÔNG AWAIT — để chạy ngầm, không block tick
-//       screenCaptureManager.startCaptureSequence(windowEvent.title);
-//     }
-//   }
-//
-// Cài đặt dependency:
-//   npm install screenshot-desktop form-data node-fetch
-//   npm install --save-dev @types/node-fetch @types/form-data
-//
-// =============================================================================
 
 import screenshot from "screenshot-desktop";
 import FormData from "form-data";
@@ -61,7 +31,7 @@ export const BROWSER_PROCESSES = [
 // INTERFACE
 // -----------------------------------------------------------------------------
 
-interface ScreenCaptureManagerConfig {
+export interface ScreenCaptureManagerConfig {
   /** URL đầy đủ của endpoint upload, VD: "http://localhost:5000/api/v1/agent/screenshot" */
   serverUrl: string;
   /** Device token để xác thực với server */
@@ -175,11 +145,6 @@ export class ScreenCaptureManager {
 
   /**
    * Upload 1 ảnh lên server qua multipart/form-data.
-   *
-   * API: POST /api/v1/agent/screenshot
-   * Header: X-Device-Token: <deviceToken>
-   * Body: multipart/form-data { screenshot: Buffer }
-   * Query: ?captureIndex=<0|1|2>&capturedAt=<ISO>&triggerTitle=<string>
    */
   private _uploadScreenshot(
     imgBuffer: Buffer,
