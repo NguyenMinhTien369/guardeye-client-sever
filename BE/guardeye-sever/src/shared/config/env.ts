@@ -9,6 +9,8 @@ export const ENV = {
   JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES || "15m",
   JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES || "7d",
   NODE_ENV: process.env.NODE_ENV || "development",
+  /** URL gốc của server — dùng để build imageUrl đầy đủ cho ảnh screenshot */
+  BASE_URL: process.env.BASE_URL || "http://localhost:5000",
 };
 
 const required = ["MONGO_URI", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"];
