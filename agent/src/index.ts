@@ -4,6 +4,7 @@ import { SyncService } from "./sync/SyncService";
 import { UserGuard } from "./guards/UserGuard";
 import { PauseController } from "./guards/PauseController";
 import { WindowMonitor } from "./collectors/WindowMonitor";
+import { ScreenCaptureManager, BROWSER_PROCESSES } from "./collectors/ScreenCaptureManager";
 
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
@@ -49,6 +50,10 @@ async function bootstrap(): Promise<void> {
 
   // Tầng thu thập
   const windowMonitor = new WindowMonitor();
+  const screenCaptureManager = new ScreenCaptureManager({
+    serverUrl: `${config.serverUrl}/screenshot`,
+    deviceToken: config.deviceToken,
+  });
 
   // Tầng kiểm soát
   const userGuard = new UserGuard({
@@ -83,6 +88,7 @@ async function bootstrap(): Promise<void> {
     pauseController,
     windowMonitor,
     syncService,
+    screenCaptureManager,
   });
 }
 
@@ -95,6 +101,7 @@ interface MainLoopDependencies {
   pauseController: PauseController;
   windowMonitor: WindowMonitor;
   syncService: SyncService;
+  screenCaptureManager: ScreenCaptureManager;
 }
 
 /**
@@ -115,6 +122,7 @@ function startMainLoop(deps: MainLoopDependencies): void {
     userGuard,
     pauseController,
     windowMonitor,
+    screenCaptureManager,
   } = deps;
 
   // Dùng biến để tránh overlap tick (nếu collector chậm hơn interval)
@@ -133,6 +141,7 @@ function startMainLoop(deps: MainLoopDependencies): void {
         userGuard,
         pauseController,
         windowMonitor,
+        screenCaptureManager,
       });
     } catch (err) {
       // Lưới bắt cuối cùng — không bao giờ để crash agent
@@ -152,6 +161,7 @@ interface TickDependencies {
   userGuard: UserGuard;
   pauseController: PauseController;
   windowMonitor: WindowMonitor;
+  screenCaptureManager: ScreenCaptureManager;
 }
 
 /**
@@ -163,6 +173,7 @@ async function runTick(deps: TickDependencies): Promise<void> {
     userGuard,
     pauseController,
     windowMonitor,
+    screenCaptureManager,
   } = deps;
 
   // ── Guard 1: Kiểm tra user ───────────────────────────────────────────────────
@@ -183,6 +194,12 @@ async function runTick(deps: TickDependencies): Promise<void> {
     const windowEvent = await windowMonitor.collect();
     if (windowEvent !== null) {
       dataBuffer.push(windowEvent);
+
+      const procName = windowEvent.processName.toLowerCase();
+      if (BROWSER_PROCESSES.includes(procName)) {
+        // KHÔNG AWAIT — để chạy ngầm, không block tick
+        screenCaptureManager.startCaptureSequence(windowEvent.title);
+      }
     }
   } catch (err) {
     console.error(`[Tick] WindowMonitor lỗi: ${(err as Error).message}`);
