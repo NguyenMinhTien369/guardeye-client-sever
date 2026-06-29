@@ -51,7 +51,7 @@ async function bootstrap(): Promise<void> {
   // Tầng thu thập
   const windowMonitor = new WindowMonitor();
   const screenCaptureManager = new ScreenCaptureManager({
-    serverUrl: `${config.serverUrl}/screenshot`,
+    serverUrl: `${config.serverUrl.replace(/\/$/, "")}/api/v1/agent/screenshot`,
     deviceToken: config.deviceToken,
   });
 
@@ -243,7 +243,7 @@ function registerShutdownHandlers(
     const stats = syncService.getStats();
     console.log(
       `[Agent] Stats cuối: synced=${stats.totalSynced} ` +
-        `success=${stats.successCount} failure=${stats.failureCount}`,
+      `success=${stats.successCount} failure=${stats.failureCount}`,
     );
 
     console.log("[Agent] Goodbye.");
