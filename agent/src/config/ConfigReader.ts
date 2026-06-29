@@ -11,7 +11,7 @@ const DEFAULTS: Pick<
   AgentConfig,
   "syncIntervalMs" | "mainLoopIntervalMs" | "pausePollIntervalMs"
 > = {
-  syncIntervalMs: 300_000,     // 5 phút
+  syncIntervalMs: 180_000,     // 3 phút
   mainLoopIntervalMs: 5_000,   // 5 giây
   pausePollIntervalMs: 30_000, // 30 giây
 };

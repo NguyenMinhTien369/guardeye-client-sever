@@ -2,7 +2,9 @@
 
 // -----------------------------------------------------------------------------
 // AGENT VALIDATION — Zod schemas cho POST /api/v1/agent/sync và
-// GET /api/v1/agent/status. Import validate từ auth.validation.
+// GET /api/v1/agent/status.
+// Đồng bộ với agent.types.ts phía Agent client.
+// Agent hiện tại chỉ gửi WindowEvent (không có HistoryEvent, không có isIncognito).
 // -----------------------------------------------------------------------------
 
 import { z } from "zod";
@@ -29,8 +31,8 @@ function formatZodErrors(error: ZodError): Record<string, string> {
 // -----------------------------------------------------------------------------
 
 /**
- * Schema cho từng event trong mảng events[] của SyncRequest.
- * Dùng z.discriminatedUnion để type-safe theo type field.
+ * Schema cho WindowEvent — ánh xạ 1-1 với WindowEvent trong agent.types.ts.
+ * Không có isIncognito vì Agent không thu thập trường này.
  */
 const windowEventSchema = z.object({
   type: z.literal("window"),
@@ -45,39 +47,18 @@ const windowEventSchema = z.object({
     .string({ required_error: "Process name là bắt buộc" })
     .trim()
     .min(1, "Process name không được rỗng"),
-  isIncognito: z.boolean({ required_error: "isIncognito là bắt buộc" }),
 });
 
-const historyEventSchema = z.object({
-  type: z.literal("history"),
-  timestamp: z
-    .string({ required_error: "Timestamp là bắt buộc" })
-    .datetime({ message: "Timestamp phải là chuỗi ISO 8601 hợp lệ" }),
-  url: z
-    .string({ required_error: "URL là bắt buộc" })
-    .trim()
-    .min(1, "URL không được rỗng"),
-  title: z
-    .string({ required_error: "Title là bắt buộc" })
-    .trim()
-    .min(1, "Title không được rỗng"),
-  browser: z.enum(["chrome", "edge", "unknown"], {
-    required_error: "Browser là bắt buộc",
-    message: "Browser phải là chrome, edge hoặc unknown",
-  }),
-  visitTime: z
-    .string({ required_error: "Visit time là bắt buộc" })
-    .datetime({ message: "VisitTime phải là chuỗi ISO 8601 hợp lệ" }),
-});
-
-const agentEventSchema = z.discriminatedUnion("type", [
-  windowEventSchema,
-  historyEventSchema,
-]);
+/**
+ * agentEventSchema — hiện tại chỉ có window.
+ * Dùng z.discriminatedUnion để dễ mở rộng thêm loại event sau này.
+ */
+const agentEventSchema = z.discriminatedUnion("type", [windowEventSchema]);
 
 /**
  * syncBodySchema — validate body của POST /api/v1/agent/sync.
  * Kiểm tra eventCount khớp với events.length qua .refine().
+ * Đồng bộ với SyncPayload trong agent.types.ts.
  */
 export const syncBodySchema = z
   .object({

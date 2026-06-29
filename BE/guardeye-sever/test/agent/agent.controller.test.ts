@@ -58,7 +58,6 @@ function buildWindowEventDto() {
     timestamp: "2025-01-01T10:00:00.000Z",
     title: "YouTube - Google Chrome",
     processName: "chrome.exe",
-    isIncognito: false,
   };
 }
 
@@ -76,8 +75,6 @@ function buildSyncServiceResponse(overrides: Record<string, unknown> = {}) {
   return {
     success: true,
     savedCount: 1,
-    windowCount: 1,
-    historyCount: 0,
     message: "Đồng bộ thành công",
     ...overrides,
   };

@@ -4,8 +4,7 @@ import { SyncService } from "./sync/SyncService";
 import { UserGuard } from "./guards/UserGuard";
 import { PauseController } from "./guards/PauseController";
 import { WindowMonitor } from "./collectors/WindowMonitor";
-import { HistoryReader } from "./collectors/HistoryReader";
-import { IncognitoDetector } from "./collectors/IncognitoDetector";
+
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
@@ -22,7 +21,7 @@ async function bootstrap(): Promise<void> {
   console.log("=".repeat(60));
 
   // ── Đọc config ──────────────────────────────────────────────────────────────
-  let configReader: ConfigReader;
+  let configReader: ConfigReader | undefined;
   try {
     configReader = new ConfigReader();
     configReader.load();
@@ -39,7 +38,9 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
-  const config = configReader.get();
+  // configReader luôn được gán ở đây vì nhánh lỗi đã exit(1)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const config = configReader!.get();
 
   // ── Khởi tạo các module (Dependency Injection thủ công) ─────────────────────
 
@@ -47,9 +48,7 @@ async function bootstrap(): Promise<void> {
   const dataBuffer = new DataBuffer(10_000);
 
   // Tầng thu thập
-  const incognitoDetector = new IncognitoDetector();
-  const windowMonitor = new WindowMonitor({ incognitoDetector });
-  const historyReader = new HistoryReader();
+  const windowMonitor = new WindowMonitor();
 
   // Tầng kiểm soát
   const userGuard = new UserGuard({
@@ -83,7 +82,6 @@ async function bootstrap(): Promise<void> {
     userGuard,
     pauseController,
     windowMonitor,
-    historyReader,
     syncService,
   });
 }
@@ -96,7 +94,6 @@ interface MainLoopDependencies {
   userGuard: UserGuard;
   pauseController: PauseController;
   windowMonitor: WindowMonitor;
-  historyReader: HistoryReader;
   syncService: SyncService;
 }
 
@@ -118,7 +115,6 @@ function startMainLoop(deps: MainLoopDependencies): void {
     userGuard,
     pauseController,
     windowMonitor,
-    historyReader,
   } = deps;
 
   // Dùng biến để tránh overlap tick (nếu collector chậm hơn interval)
@@ -137,7 +133,6 @@ function startMainLoop(deps: MainLoopDependencies): void {
         userGuard,
         pauseController,
         windowMonitor,
-        historyReader,
       });
     } catch (err) {
       // Lưới bắt cuối cùng — không bao giờ để crash agent
@@ -157,7 +152,6 @@ interface TickDependencies {
   userGuard: UserGuard;
   pauseController: PauseController;
   windowMonitor: WindowMonitor;
-  historyReader: HistoryReader;
 }
 
 /**
@@ -169,7 +163,6 @@ async function runTick(deps: TickDependencies): Promise<void> {
     userGuard,
     pauseController,
     windowMonitor,
-    historyReader,
   } = deps;
 
   // ── Guard 1: Kiểm tra user ───────────────────────────────────────────────────
@@ -185,24 +178,14 @@ async function runTick(deps: TickDependencies): Promise<void> {
 
   // ── Collectors ───────────────────────────────────────────────────────────────
 
-  // Chạy song song — windowMonitor và historyReader độc lập nhau
-  const [windowEvent, historyEvents] = await Promise.allSettled([
-    windowMonitor.collect(),
-    historyReader.collect(),
-  ]);
-
-  // WindowMonitor
-  if (windowEvent.status === "fulfilled" && windowEvent.value !== null) {
-    dataBuffer.push(windowEvent.value);
-  } else if (windowEvent.status === "rejected") {
-    console.error(`[Tick] WindowMonitor lỗi: ${windowEvent.reason}`);
-  }
-
-  // HistoryReader — trả về mảng, pushMany
-  if (historyEvents.status === "fulfilled" && historyEvents.value.length > 0) {
-    dataBuffer.pushMany(historyEvents.value);
-  } else if (historyEvents.status === "rejected") {
-    console.error(`[Tick] HistoryReader lỗi: ${historyEvents.reason}`);
+  // Thu thập thông tin cửa sổ đang active
+  try {
+    const windowEvent = await windowMonitor.collect();
+    if (windowEvent !== null) {
+      dataBuffer.push(windowEvent);
+    }
+  } catch (err) {
+    console.error(`[Tick] WindowMonitor lỗi: ${(err as Error).message}`);
   }
 }
 
@@ -254,11 +237,11 @@ function registerShutdownHandlers(
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
 
   // Bắt exception không xử lý — log và tiếp tục (không crash)
-  process.on("uncaughtException", (err) => {
+  process.on("uncaughtException", (err: Error) => {
     console.error(`[Agent] uncaughtException: ${err.message}\n${err.stack}`);
   });
 
-  process.on("unhandledRejection", (reason) => {
+  process.on("unhandledRejection", (reason: unknown) => {
     console.error(`[Agent] unhandledRejection: ${String(reason)}`);
   });
 }
