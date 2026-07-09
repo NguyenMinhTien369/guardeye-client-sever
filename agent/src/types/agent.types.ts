@@ -143,6 +143,12 @@ export interface PauseStatusResponse {
   /** ISO 8601 — thời điểm trạng thái này có hiệu lực (optional). */
   since?: string;
 
+  /**
+   * ISO 8601 — thời điểm Agent tự resume (client-side auto-resume).
+   * Nếu undefined → pause vô thời hạn, chờ phụ huynh resume thủ công.
+   */
+  until?: string;
+
   /** Lý do tạm dừng — hiển thị trong log Agent (optional). */
   reason?: string;
 }
