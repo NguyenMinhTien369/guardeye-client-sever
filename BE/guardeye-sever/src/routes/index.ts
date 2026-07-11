@@ -9,11 +9,13 @@ import {
 } from "../features/screenshot/screenshot.routes";
 // import tradeRoutes from '../features/trade/trade.routes';
 import aiRoutes from '../features/ai/ai.routes'; // Import router AI
+import dashboardRoutes from '../features/dashboard/dashboard.routes';
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/children", childrenRoutes);
+router.use("/dashboard", dashboardRoutes);
 
 // Thêm route AI vào hệ thống
 router.use('/ai', aiRoutes);

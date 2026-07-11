@@ -17,7 +17,8 @@ const TOTAL_SHOTS = 3;          // Số ảnh mỗi batch
 const CAPTURE_DURATION_MS = 10_000; // Tổng thời gian chụp: 10 giây
 const INTERVAL_MS = Math.floor(CAPTURE_DURATION_MS / TOTAL_SHOTS); // ~3333ms/tấm
 
-// Danh sách process trình duyệt được nhận diện
+// Danh sách process trình duyệt được nhận diện — dùng riêng để bật tính năng
+// lấy URL qua UI Automation (chỉ áp dụng được cho trình duyệt).
 export const BROWSER_PROCESSES = [
   "chrome.exe",
   "msedge.exe",
@@ -25,6 +26,67 @@ export const BROWSER_PROCESSES = [
   "brave.exe",
   "opera.exe",
   "vivaldi.exe",
+];
+
+// Danh sách process KHÔNG phải browser nhưng vẫn cần trigger chụp màn hình
+// (game, launcher, ứng dụng giải trí — theo policy giám sát máy công ty).
+// Thêm tên .exe (không phân biệt hoa/thường) vào đây khi cần theo dõi thêm app.
+export const MONITORED_NON_BROWSER_PROCESSES = [
+  // ── Riot Games ──────────────────────────────────────────────────────────────
+  "leagueclient.exe",
+  "leagueclientux.exe",
+  "league of legends.exe",
+  "riotclientservices.exe",
+  "valorant.exe",
+  "valorant-win64-shipping.exe",
+
+  // ── Battle Royale / Bắn súng ─────────────────────────────────────────────────
+  "tslgame.exe",              // PUBG
+  "pubg.exe",
+  "fortniteclient-win64-shipping.exe", // Fortnite
+  "r5apex.exe",                // Apex Legends
+  "csgo.exe",                  // CS:GO
+  "cs2.exe",                   // Counter-Strike 2
+
+  // ── MOBA / Blizzard ──────────────────────────────────────────────────────────
+  "dota2.exe",
+  "battle.net.exe",
+  "overwatch.exe",
+
+  // ── Launcher / Nền tảng phân phối game ──────────────────────────────────────
+  "steam.exe",
+  "steamwebhelper.exe",
+  "epicgameslauncher.exe",
+  "gameoverlayui.exe",
+  "origin.exe",
+  "eaapp.exe",
+  "ubisoftconnect.exe",
+  "uplay.exe",
+
+  // ── Game phổ biến khác ───────────────────────────────────────────────────────
+  "minecraft.exe",
+  "javaw.exe",                 // Minecraft Java Edition thường chạy dưới tên này
+  "robloxplayerbeta.exe",
+  "gta5.exe",
+  "witcher3.exe",
+
+  // ── Streaming / Ghi hình màn hình ───────────────────────────────────────────
+  "obs64.exe",
+  "obs32.exe",
+  "streamlabs obs.exe",
+  "xsplit.core.exe",
+  "nvidia share.exe",           // NVIDIA ShadowPlay/GeForce Experience overlay
+
+  // ── Chat / Giải trí khác thường bị lạm dụng trong giờ làm ───────────────────
+  "discord.exe",
+  "spotify.exe",
+  "netflix.exe",
+];
+
+// Danh sách tổng hợp dùng để quyết định có trigger capture hay không.
+export const CAPTURE_TRIGGER_PROCESSES = [
+  ...BROWSER_PROCESSES,
+  ...MONITORED_NON_BROWSER_PROCESSES,
 ];
 
 // -----------------------------------------------------------------------------
