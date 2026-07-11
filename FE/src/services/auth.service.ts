@@ -65,4 +65,25 @@ export const authService = {
     );
     return response.data;
   },
+
+  async updateProfile(data: { name: string; notifications: { email: boolean; browser: boolean } }): Promise<ApiResponse<User>> {
+    const response = await api.patch<ApiResponse<User>>("/auth/profile", data);
+    return response.data;
+  },
+
+  async changePassword(data: any): Promise<ApiResponse> {
+    const response = await api.put<ApiResponse>("/auth/password", data);
+    return response.data;
+  },
+
+  async uploadAvatar(file: File): Promise<ApiResponse<User>> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await api.post<ApiResponse<User>>("/auth/avatar", formData, {
+      headers: {
+        "Content-Type": undefined,
+      },
+    });
+    return response.data;
+  },
 };

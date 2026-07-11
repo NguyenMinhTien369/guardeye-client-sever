@@ -86,6 +86,30 @@ export class AuthRepository {
     await user.save();
   }
 
+  /**
+   * Cập nhật thông tin profile
+   */
+  async updateProfile(userId: string, data: any): Promise<IUser | null> {
+    return User.findByIdAndUpdate(userId, { $set: data }, { new: true });
+  }
+
+  /**
+   * Cập nhật ảnh đại diện
+   */
+  async updateAvatar(userId: string, avatarUrl: string): Promise<IUser | null> {
+    return User.findByIdAndUpdate(userId, { $set: { avatarUrl } }, { new: true });
+  }
+
+  /**
+   * Đổi mật khẩu
+   */
+  async changePassword(userId: string, newPassword: string): Promise<void> {
+    const user = await User.findById(userId).select("+password");
+    if (!user) return;
+    user.password = newPassword;
+    await user.save();
+  }
+
   // ---------------------------------------------------------------------------
   // [MỚI] REFRESH TOKEN OPERATIONS
   // ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import {
 } from "../features/screenshot/screenshot.routes";
 // import tradeRoutes from '../features/trade/trade.routes';
 import aiRoutes from '../features/ai/ai.routes'; // Import router AI
+import dashboardRoutes from '../features/dashboard/dashboard.routes'; // Dashboard FE
 
 const router = Router();
 
@@ -17,6 +18,9 @@ router.use("/children", childrenRoutes);
 
 // Thêm route AI vào hệ thống
 router.use('/ai', aiRoutes);
+
+// GET /api/v1/dashboard/device/:deviceId/activity — Phụ huynh xem lịch sử WindowEvent
+router.use('/dashboard', dashboardRoutes);
 
 // POST /api/v1/children/:childId/devices
 router.use("/children/:childId/devices", devicesByChildRouter);

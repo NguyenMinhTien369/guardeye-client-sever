@@ -8,6 +8,10 @@ import { Register } from "../Pages/Register";
 import { ForgotPassword } from "../Pages/ForgotPassword";
 import { ResetPassword } from "../Pages/ResetPassword";
 import { Dashboard } from "../Pages/Dashboard";
+import { Children } from "../Pages/Children";
+import { Devices } from "../Pages/Devices";
+import { DeviceMonitor } from "../Pages/DeviceMonitor";
+import { Profile } from "../Pages/Profile";
 
 export function AppRouter() {
   return (
@@ -33,6 +37,10 @@ export function AppRouter() {
           }
         >
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/children" element={<Children />} />
+          <Route path="/devices" element={<Devices />} />
+          <Route path="/devices/:deviceId/monitor" element={<DeviceMonitor />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* Fallback redirect */}

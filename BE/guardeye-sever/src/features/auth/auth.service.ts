@@ -35,6 +35,7 @@ class AuthService {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
+      avatarUrl: user.avatarUrl || null,
       notificationEmail: user.notificationEmail,
       notifications: user.notifications,
       isActive: user.isActive,
@@ -217,6 +218,39 @@ class AuthService {
 
     // Repository.resetPassword dùng findById + save để trigger pre-save hook hash password
     await authRepository.resetPassword(user._id.toString(), newPassword);
+  }
+
+  // ---------------------------------------------------------------------------
+  // PROFILE & SETTINGS
+  // ---------------------------------------------------------------------------
+
+  async updateProfile(userId: string, data: any): Promise<any> {
+    const updatedUser = await authRepository.updateProfile(userId, data);
+    if (!updatedUser) throw new Error("Người dùng không tồn tại");
+    return this.toUserResponse(updatedUser);
+  }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
+    const user = await authRepository.findByIdWithRefreshTokenId(userId); // Need a way to get user with password, let's use findByEmailWithPassword
+    if (!user) throw new Error("Người dùng không tồn tại");
+    
+    const userWithPassword = await authRepository.findByEmailWithPassword(user.email);
+    if (!userWithPassword) throw new Error("Người dùng không tồn tại");
+
+    const isMatch = await userWithPassword.comparePassword(oldPassword);
+    if (!isMatch) {
+      throw new Error("Mật khẩu hiện tại không đúng");
+    }
+
+    await authRepository.changePassword(userId, newPassword);
+  }
+
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<any> {
+    // Return relative url or full url depending on config
+    const avatarUrl = `/uploads/avatars/${file.filename}`;
+    const updatedUser = await authRepository.updateAvatar(userId, avatarUrl);
+    if (!updatedUser) throw new Error("Người dùng không tồn tại");
+    return this.toUserResponse(updatedUser);
   }
 }
 
