@@ -91,6 +91,7 @@ const deviceSchema = new Schema<IDevice, DeviceModel>(
     pausedUntil: {
       type: Date,
       default: null, // Hết thời điểm này agent sẽ tự động resume
+      index: true,   // Hỗ trợ query findExpiredPauses của cron job chạy mỗi phút
     },
   },
   {

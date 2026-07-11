@@ -64,7 +64,11 @@ async function bootstrap(): Promise<void> {
   const pauseController = new PauseController({ config });
 
   // Tầng đồng bộ (nhận DataBuffer qua DI)
-  const syncService = new SyncService({ config, buffer: dataBuffer });
+  const syncService = new SyncService({
+    config,
+    buffer: dataBuffer,
+    isPausedFn: pauseController.getIsPaused.bind(pauseController),
+  });
 
   // ── Đăng ký graceful shutdown ────────────────────────────────────────────────
   registerShutdownHandlers(syncService, pauseController);

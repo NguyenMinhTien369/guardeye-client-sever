@@ -368,7 +368,200 @@
             }
           },
           "response": []
+        },
+         {
+    "name": "Pause Device — Vô thời hạn",
+    "event": [
+      {
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+            "pm.test(\"isPaused === true\", () => {",
+            "    const json = pm.response.json();",
+            "    pm.expect(json.data.device.isPaused).to.eql(true);",
+            "});",
+            "pm.test(\"pausedUntil === null (Không có deadline)\", () => {",
+            "    const json = pm.response.json();",
+            "    pm.expect(json.data.device.pausedUntil).to.be.null;",
+            "});"
+          ],
+          "type": "text/javascript"
         }
+      }
+    ],
+    "request": {
+      "method": "PATCH",
+      "header": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{accessToken}}",
+          "type": "text"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "type": "text"
+        }
+      ],
+      "body": {
+        "mode": "raw",
+        "raw": "{}",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "url": {
+        "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/pause",
+        "host": ["{{baseUrl}}"],
+        "path": ["api", "v1", "devices", "{{deviceId}}", "pause"]
+      }
+    }
+  },
+  {
+    "name": "Pause Device — Có thời hạn (gần, để test auto-resume)",
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "exec": [
+            "// Tính toán thời điểm tương lai (hiện tại + 90 giây)",
+            "const future = new Date(Date.now() + 90000).toISOString();",
+            "// Lưu vào biến môi trường tạm thời để dùng trong Body",
+            "pm.variables.set(\"pausedUntilNear\", future);"
+          ],
+          "type": "text/javascript"
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+            "pm.test(\"isPaused === true\", () => {",
+            "    const json = pm.response.json();",
+            "    pm.expect(json.data.device.isPaused).to.eql(true);",
+            "});",
+            "pm.test(\"pausedUntil khớp với giá trị vừa gửi lên\", () => {",
+            "    const json = pm.response.json();",
+            "    const sentValue = pm.variables.get(\"pausedUntilNear\");",
+            "    pm.expect(json.data.device.pausedUntil).to.eql(sentValue);",
+            "});"
+          ],
+          "type": "text/javascript"
+        }
+      }
+    ],
+    "request": {
+      "method": "PATCH",
+      "header": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{accessToken}}",
+          "type": "text"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "type": "text"
+        }
+      ],
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"pausedUntil\": \"{{pausedUntilNear}}\"\n}",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "url": {
+        "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/pause",
+        "host": ["{{baseUrl}}"],
+        "path": ["api", "v1", "devices", "{{deviceId}}", "pause"]
+      }
+    }
+  },
+  {
+    "name": "Resume Device — Thủ công",
+    "event": [
+      {
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+            "pm.test(\"Trạng thái Pause đã được reset hoàn toàn (cả 3 fields)\", () => {",
+            "    const json = pm.response.json();",
+            "    pm.expect(json.data.device.isPaused).to.eql(false);",
+            "    pm.expect(json.data.device.pausedUntil).to.be.null;",
+            "    pm.expect(json.data.device.pausedSince).to.be.null;",
+            "});"
+          ],
+          "type": "text/javascript"
+        }
+      }
+    ],
+    "request": {
+      "method": "PATCH",
+      "header": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{accessToken}}",
+          "type": "text"
+        }
+      ],
+      "url": {
+        "raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/resume",
+        "host": ["{{baseUrl}}"],
+        "path": ["api", "v1", "devices", "{{deviceId}}", "resume"]
+      }
+    }
+  },
+  {
+    "name": "Verify Auto-Resume",
+    "event": [
+      {
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+            "pm.test(\"Device đã được auto-resume bởi cron job\", () => {",
+            "    const json = pm.response.json();",
+            "    const currentDeviceId = pm.environment.get(\"deviceId\");",
+            "    ",
+            "    // Tìm device tương ứng trong mảng trả về",
+            "    const device = json.data.find(d => d.id === currentDeviceId);",
+            "    pm.expect(device, \"Không tìm thấy Device trong danh sách\").to.not.be.undefined;",
+            "    ",
+            "    // Xác nhận side-effect từ cron job",
+            "    pm.expect(device.isPaused, \"Thiết bị vẫn đang bị pause, cron job chưa chạy hoặc có lỗi\").to.eql(false);",
+            "    pm.expect(device.pausedUntil).to.be.null;",
+            "    pm.expect(device.pausedSince).to.be.null;",
+            "});"
+          ],
+          "type": "text/javascript"
+        }
+      }
+    ],
+    "request": {
+      "method": "GET",
+      "header": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{accessToken}}",
+          "type": "text"
+        }
+      ],
+      "url": {
+        "raw": "{{baseUrl}}/api/v1/devices",
+        "host": ["{{baseUrl}}"],
+        "path": ["api", "v1", "devices"]
+      },
+      "description": "Request này phải chạy CÁCH request \"Pause có thời hạn\" tối thiểu thời gian bằng [Chu kỳ cron job (1 phút) + Độ trễ pausedUntil (90s) = ~2.5 phút] để đảm bảo cron job đã quét ít nhất 1 lần.\n\nLý do: Không thể test trực tiếp cron job qua HTTP. Ta chỉ có thể test gián tiếp qua side-effect bằng cách kiểm tra sự thay đổi trạng thái isPaused dưới Database qua API GET này."
+    }
+  }
       ]
     },
     {
