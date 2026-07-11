@@ -4,7 +4,7 @@ import { SyncService } from "./sync/SyncService";
 import { UserGuard } from "./guards/UserGuard";
 import { PauseController } from "./guards/PauseController";
 import { WindowMonitor } from "./collectors/WindowMonitor";
-import { ScreenCaptureManager, BROWSER_PROCESSES } from "./collectors/ScreenCaptureManager";
+import { ScreenCaptureManager, CAPTURE_TRIGGER_PROCESSES } from "./collectors/ScreenCaptureManager";
 
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
@@ -64,11 +64,7 @@ async function bootstrap(): Promise<void> {
   const pauseController = new PauseController({ config });
 
   // Tầng đồng bộ (nhận DataBuffer qua DI)
-  const syncService = new SyncService({
-    config,
-    buffer: dataBuffer,
-    isPausedFn: pauseController.getIsPaused.bind(pauseController),
-  });
+  const syncService = new SyncService({ config, buffer: dataBuffer });
 
   // ── Đăng ký graceful shutdown ────────────────────────────────────────────────
   registerShutdownHandlers(syncService, pauseController);
@@ -200,7 +196,7 @@ async function runTick(deps: TickDependencies): Promise<void> {
       dataBuffer.push(windowEvent);
 
       const procName = windowEvent.processName.toLowerCase();
-      if (BROWSER_PROCESSES.includes(procName)) {
+      if (CAPTURE_TRIGGER_PROCESSES.includes(procName)) {
         // KHÔNG AWAIT — để chạy ngầm, không block tick
         screenCaptureManager.startCaptureSequence(windowEvent.title);
       }
