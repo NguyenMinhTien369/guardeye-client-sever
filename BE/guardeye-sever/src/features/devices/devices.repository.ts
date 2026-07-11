@@ -92,6 +92,18 @@ export class DevicesRepository {
   async findByChildId(childId: string): Promise<IDevice | null> {
     return Device.findOne({ childId });
   }
+
+  /**
+   * Tìm tất cả thiết bị đang bị pause có thời hạn đã hết (pausedUntil <= now).
+   * Dùng bởi cron job auto-resume — chạy mỗi phút.
+   * Điều kiện: isPaused=true, pausedUntil khác null và đã qua mốc `now`.
+   */
+  async findExpiredPauses(now: Date): Promise<IDevice[]> {
+    return Device.find({
+      isPaused:    true,
+      pausedUntil: { $ne: null, $lte: now },
+    });
+  }
 }
 
 export default new DevicesRepository();
