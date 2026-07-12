@@ -108,6 +108,26 @@ export const forgotPassword = async (
 };
 
 /**
+ * POST /auth/verify-otp
+ */
+export const verifyOtp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, otp } = req.body;
+    await authService.verifyOtp(email, otp);
+    new OKResponse({
+      message: "Xác thực OTP thành công, bạn có thể đặt lại mật khẩu.",
+    }).send(res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Xác thực OTP thất bại";
+    next(new BadRequestError(message));
+  }
+};
+
+/**
  * POST /auth/reset-password
  */
 export const resetPassword = async (
@@ -116,8 +136,8 @@ export const resetPassword = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { token, newPassword } = req.body;
-    await authService.resetPassword(token, newPassword);
+    const { email, otp, newPassword } = req.body;
+    await authService.resetPassword(email, otp, newPassword);
     new OKResponse({
       message: "Đặt lại mật khẩu thành công",
     }).send(res);

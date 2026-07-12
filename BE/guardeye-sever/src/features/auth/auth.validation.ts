@@ -73,7 +73,16 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    token: z.string({ required_error: "Token là bắt buộc" }).min(1),
+    email: z
+      .string({ required_error: "Email là bắt buộc" })
+      .trim()
+      .toLowerCase()
+      .email("Định dạng email không hợp lệ"),
+
+    otp: z
+      .string({ required_error: "Mã OTP là bắt buộc" })
+      .length(6, "Mã OTP phải gồm 6 chữ số")
+      .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
 
     newPassword: z
       .string({ required_error: "Mật khẩu mới là bắt buộc" })
@@ -94,6 +103,19 @@ export const resetPasswordSchema = z
 
 export const verifyEmailSchema = z.object({
   token: z.string({ required_error: "Token là bắt buộc" }).min(1),
+});
+
+export const verifyOtpSchema = z.object({
+  email: z
+    .string({ required_error: "Email là bắt buộc" })
+    .trim()
+    .toLowerCase()
+    .email("Định dạng email không hợp lệ"),
+  
+  otp: z
+    .string({ required_error: "Mã OTP là bắt buộc" })
+    .length(6, "Mã OTP phải gồm 6 chữ số")
+    .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
 });
 
 export const refreshTokenSchema = z.object({
@@ -146,6 +168,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

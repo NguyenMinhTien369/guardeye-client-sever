@@ -11,6 +11,7 @@ import {
   LoginResponseDto,
 } from "./auth.dto";
 import { IUser } from "./auth.model";
+import emailService from "../../shared/utils/email.util";
 
 // -----------------------------------------------------------------------------
 // AUTH SERVICE
@@ -54,6 +55,15 @@ class AuthService {
     return crypto.randomBytes(32).toString("hex");
   }
 
+  /**
+   * Tạo mã OTP ngẫu nhiên gồm 6 chữ số
+   */
+  private generateNumericOTP(): string {
+    // Math.random() generates [0, 1), so multiply by 900000 gives [0, 900000)
+    // Floor gives [0, 899999], adding 100000 gives [100000, 999999]
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
   // ---------------------------------------------------------------------------
   // REGISTER
   // ---------------------------------------------------------------------------
@@ -78,8 +88,8 @@ class AuthService {
       verifyToken,
     );
 
-    // 5. TODO: Gửi email xác thực kèm verifyToken
-    // await emailService.sendVerificationEmail(newUser.email, verifyToken);
+    // 5. Gửi email xác thực kèm verifyToken
+    await emailService.sendVerificationEmail(newUser.email, verifyToken);
 
     return {
       user: this.toUserResponse(newUser),
@@ -192,7 +202,7 @@ class AuthService {
     // Client luôn nhận được response thành công giống nhau.
     if (!user) return;
 
-    const resetToken = this.generateSecureToken();
+    const resetToken = this.generateNumericOTP();
     const expires = new Date(Date.now() + PASSWORD_RESET_EXPIRES_MS);
 
     await authRepository.setPasswordResetToken(
@@ -201,19 +211,31 @@ class AuthService {
       expires,
     );
 
-    // TODO: Gửi email reset password kèm resetToken
-    // await emailService.sendPasswordResetEmail(user.email, resetToken);
+    // Gửi email reset password kèm mã OTP
+    await emailService.sendPasswordResetEmail(user.email, resetToken);
+  }
+
+  // ---------------------------------------------------------------------------
+  // VERIFY OTP
+  // ---------------------------------------------------------------------------
+
+  async verifyOtp(email: string, otp: string): Promise<void> {
+    const user = await authRepository.findByEmailAndResetToken(email, otp);
+
+    if (!user) {
+      throw new Error("Mã OTP không hợp lệ hoặc đã hết hạn");
+    }
   }
 
   // ---------------------------------------------------------------------------
   // RESET PASSWORD
   // ---------------------------------------------------------------------------
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const user = await authRepository.findByPasswordResetToken(token);
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<void> {
+    const user = await authRepository.findByEmailAndResetToken(email, otp);
 
     if (!user) {
-      throw new Error("Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn");
+      throw new Error("Mã OTP không hợp lệ hoặc đã hết hạn");
     }
 
     // Repository.resetPassword dùng findById + save để trigger pre-save hook hash password

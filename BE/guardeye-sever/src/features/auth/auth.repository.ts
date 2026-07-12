@@ -199,6 +199,18 @@ export class AuthRepository {
       passwordResetExpires: { $gt: new Date() },
     });
   }
+
+  /**
+   * Tìm user theo email và reset password token và kiểm tra token chưa hết hạn.
+   * $gt: new Date() — chỉ lấy token còn hiệu lực.
+   */
+  async findByEmailAndResetToken(email: string, token: string): Promise<IUser | null> {
+    return User.findOne({
+      email: email.toLowerCase().trim(),
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() },
+    });
+  }
 }
 
 export default new AuthRepository();
