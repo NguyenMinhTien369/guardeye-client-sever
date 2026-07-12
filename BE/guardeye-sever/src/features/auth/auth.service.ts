@@ -80,15 +80,15 @@ class AuthService {
     // 3. Tạo user mới (password sẽ được hash bởi pre-save hook trong Model)
     const newUser = await authRepository.createUser(userData);
 
-    // 4. Tạo và lưu email verify token
-    const verifyToken = this.generateSecureToken();
+    // 4. Tạo và lưu email verify token (OTP 6 số)
+    const verifyToken = this.generateNumericOTP();
     await authRepository.setEmailVerifyToken(
       newUser._id.toString(),
       verifyToken,
     );
 
-    // 5. TODO: Gửi email xác thực kèm verifyToken
-    // await emailService.sendVerificationEmail(newUser.email, verifyToken);
+    // 5. Gửi email xác thực kèm verifyToken
+    await emailService.sendVerificationEmail(newUser.email, verifyToken);
 
     return {
       user: this.toUserResponse(newUser),
@@ -176,11 +176,11 @@ class AuthService {
   // EMAIL VERIFICATION
   // ---------------------------------------------------------------------------
 
-  async verifyEmail(token: string): Promise<void> {
-    const user = await authRepository.findByEmailVerifyToken(token);
+  async verifyEmail(email: string, token: string): Promise<void> {
+    const user = await authRepository.findByEmailAndVerifyToken(email, token);
 
     if (!user) {
-      throw new Error("Token xác thực không hợp lệ hoặc đã hết hạn");
+      throw new Error("Mã xác nhận không hợp lệ hoặc đã hết hạn");
     }
 
     if (user.emailVerified) {

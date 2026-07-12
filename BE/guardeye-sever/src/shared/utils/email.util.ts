@@ -36,6 +36,26 @@ class EmailService {
   }
 
   /**
+   * Gửi email xác thực tài khoản (Verify Email)
+   */
+  async sendVerificationEmail(to: string, token: string): Promise<void> {
+    const subject = "Xác thực địa chỉ email - GuardEye";
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Xác thực tài khoản của bạn</h2>
+        <p>Cảm ơn bạn đã đăng ký tài khoản tại GuardEye.</p>
+        <p>Để hoàn tất quá trình đăng ký, vui lòng sử dụng mã xác nhận (OTP) dưới đây:</p>
+        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+          ${token}
+        </div>
+        <p>Mã này dùng để xác thực email của bạn.</p>
+        <p>Trân trọng,<br>Đội ngũ GuardEye</p>
+      </div>
+    `;
+    await this.sendEmail(to, subject, html);
+  }
+
+  /**
    * Gửi mã OTP khôi phục mật khẩu
    */
   async sendPasswordResetEmail(to: string, otp: string): Promise<void> {
