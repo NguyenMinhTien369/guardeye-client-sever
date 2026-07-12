@@ -166,6 +166,16 @@ export class AuthRepository {
   }
 
   /**
+   * Tìm user theo email và email verify token (OTP).
+   */
+  async findByEmailAndVerifyToken(email: string, token: string): Promise<IUser | null> {
+    return User.findOne({
+      email: email.toLowerCase().trim(),
+      emailVerifyToken: token,
+    });
+  }
+
+  /**
    * Tìm user theo reset password token và kiểm tra token chưa hết hạn.
    * $gt: new Date() — chỉ lấy token còn hiệu lực.
    */

@@ -77,8 +77,8 @@ export const verifyEmail = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { token } = req.body;
-    await authService.verifyEmail(token);
+    const { email, token } = req.body;
+    await authService.verifyEmail(email, token);
     new OKResponse({
       message: "Xác thực email thành công",
     }).send(res);

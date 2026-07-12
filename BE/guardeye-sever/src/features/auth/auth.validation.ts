@@ -102,7 +102,15 @@ export const resetPasswordSchema = z
   });
 
 export const verifyEmailSchema = z.object({
-  token: z.string({ required_error: "Token là bắt buộc" }).min(1),
+  email: z
+    .string({ required_error: "Email là bắt buộc" })
+    .trim()
+    .toLowerCase()
+    .email("Định dạng email không hợp lệ"),
+  token: z
+    .string({ required_error: "Mã xác nhận là bắt buộc" })
+    .length(6, "Mã xác nhận phải gồm 6 chữ số")
+    .regex(/^\d+$/, "Mã xác nhận chỉ được chứa số"),
 });
 
 export const verifyOtpSchema = z.object({
