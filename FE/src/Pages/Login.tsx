@@ -113,9 +113,9 @@ export function Login() {
           {errors.password && <div className="form-error"><FiAlertCircle /> {errors.password}</div>}
         </div>
 
-        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-          <input type="checkbox" id="keep-signed-in" style={{ width: '16px', height: '16px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
-          <label htmlFor="keep-signed-in" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Keep me signed in for 30 days</label>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <input type="checkbox" id="keep-signed-in" style={{ width: '16px', height: '16px', borderRadius: '4px', border: '1px solid var(--border-color)', margin: 0, cursor: 'pointer' }} />
+          <label htmlFor="keep-signed-in" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, cursor: 'pointer' }}>Keep me signed in for 30 days</label>
         </div>
 
         <button

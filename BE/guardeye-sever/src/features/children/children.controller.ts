@@ -130,3 +130,33 @@ export const remove = async (
     next(new NotFoundError(message));
   }
 };
+
+/**
+ * POST /children/:id/avatar
+ * Upload avatar cho hồ sơ bé.
+ */
+export const uploadAvatar = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      next(new BadRequestError("File ảnh là bắt buộc"));
+      return;
+    }
+
+    const parentId = req.user!._id.toString();
+    const { id } = req.params;
+    
+    const result = await childrenService.updateAvatar(id, parentId, req.file.filename);
+    
+    new OKResponse({
+      message: "Cập nhật ảnh đại diện thành công",
+      data: result,
+    }).send(res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Cập nhật ảnh đại diện thất bại";
+    next(new BadRequestError(message));
+  }
+};

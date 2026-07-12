@@ -5,37 +5,24 @@ import { sanitizeUrl, hashUrl } from '../../shared/utils/url.util';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Hàm tự động dò tìm model khả dụng của tài khoản
-async function getAvailableModelName(): Promise<string> {
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
-  
-  // Ép kiểu data thành any để TypeScript không báo lỗi đỏ
-  const data: any = await response.json();
+// Model mặc định
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 
-  if (data && data.error) {
-    console.error("========== LÝ DO GOOGLE TỪ CHỐI KEY ==========");
-    console.error(JSON.stringify(data.error, null, 2));
-    console.error("================================================");
-    throw new Error(`Google API từ chối Key: ${data.error.message}`);
-  }
-
-  // Lọc ra các model hỗ trợ tạo văn bản
-  const validModels = data?.models?.filter((m: any) => 
-    m.supportedGenerationMethods?.includes('generateContent')
-  );
-
-  if (!validModels || validModels.length === 0) {
-    console.error("Chi tiết phản hồi từ Google:", data);
-    throw new Error("Không tìm thấy model nào khả dụng cho Key này.");
-  }
-
-  // Ưu tiên chọn model flash hoặc pro
-  const bestModel = validModels.find((m: any) => m.name.includes('flash') || m.name.includes('pro')) || validModels[0];
-  const modelName = bestModel.name.replace('models/', '');
-  
-  console.log("🎯 Google cho phép bạn dùng Model:", modelName);
-  return modelName;
+// Kiểm tra API key khi khởi động
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('⚠️  GEMINI_API_KEY chưa được cấu hình trong .env — AI features sẽ không hoạt động');
 }
+
+// Hàm lấy model: ưu tiên dùng mặc định, fallback sang query API nếu cần
+async function getModelName(): Promise<string> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    throw new Error('GEMINI_API_KEY chưa được cấu hình. Hãy thêm key vào file .env của BE.');
+  }
+  // Dùng thẳng model mặc định — không cần gọi thêm API để list models
+  return DEFAULT_MODEL;
+}
+
 
 export class AiService {
   async analyzeUrl(rawUrl: string) {
@@ -46,21 +33,22 @@ export class AiService {
     if (cachedAnalysis) return cachedAnalysis;
 
     const prompt = `
-      Bạn là một chuyên gia an toàn mạng cho trẻ em. Hãy phân tích URL sau: "${cleanUrl}".
-      Trả về ĐÚNG định dạng JSON sau, không kèm bất kỳ văn bản nào khác:
+      Bạn là một chuyên gia an toàn mạng cho trẻ em. Dựa vào URL hoặc thông tin sau: "${cleanUrl}", hãy xác định nền tảng/trang web/ứng dụng mà trẻ đang truy cập và phân tích mức độ an toàn của nó đối với trẻ em.
+      Nếu đây là một đường dẫn tìm kiếm (ví dụ chứa google.com/search?q=...), hãy phân tích nội dung/từ khóa mà trẻ đang tìm kiếm thay vì phân tích công cụ tìm kiếm.
+      Trả về ĐÚNG định dạng JSON sau, không kèm bất kỳ văn bản nào khác (không dùng markdown format \`\`\`json):
       {
-        "platformName": "Tên nền tảng (vd: YouTube, Discord)",
-        "description": "Mô tả ngắn gọn nền tảng này làm gì",
+        "platformName": "Tên nền tảng hoặc chủ đề (vd: YouTube, Discord, Minecraft)",
+        "description": "Mô tả ngắn gọn nền tảng/chủ đề này là gì",
         "mainActivities": ["Hoạt động 1", "Hoạt động 2"],
         "safetyLevel": "Safe hoặc Warning hoặc Danger",
-        "parentAdvice": "Lời khuyên ngắn gọn cho phụ huynh khi con truy cập trang này"
+        "parentAdvice": "Lời khuyên ngắn gọn cho phụ huynh"
       }
     `;
 
     try {
-      const selectedModel = await getAvailableModelName();
+      const selectedModel = await getModelName();
       const model = genAI.getGenerativeModel({ model: selectedModel });
-      
+
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
 
@@ -92,11 +80,11 @@ export class AiService {
     }
 
     try {
-      const selectedModel = await getAvailableModelName();
+      const selectedModel = await getModelName();
       const model = genAI.getGenerativeModel({ model: selectedModel });
 
       const history = [
-        { role: 'user', parts: [{ text: `Ngữ cảnh: Chúng ta đang thảo luận về trang web ${cleanUrl}. Trả lời ngắn gọn, dễ hiểu cho phụ huynh.` }] },
+        { role: 'user', parts: [{ text: `Ngữ cảnh: Chúng ta đang thảo luận về nền tảng hoặc nội dung liên quan đến đường dẫn/từ khóa: "${cleanUrl}". Hãy đóng vai chuyên gia an toàn mạng, trả lời ngắn gọn, dễ hiểu cho phụ huynh.` }] },
         { role: 'model', parts: [{ text: 'Tôi đã hiểu.' }] },
         ...chatSession.messages.map(msg => ({
           role: msg.role === 'ai' ? 'model' : 'user',

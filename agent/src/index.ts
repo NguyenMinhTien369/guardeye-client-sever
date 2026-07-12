@@ -269,3 +269,5 @@ bootstrap().catch((err: Error) => {
   console.error(`[Agent] Bootstrap thất bại nghiêm trọng: ${err.message}`);
   process.exit(1);
 });
+
+// Restart for syncIntervalMs update

@@ -93,6 +93,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     []
   );
 
+  const updateUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem(TOKEN_KEYS.USER, JSON.stringify(updatedUser));
+  }, []);
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -102,6 +107,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     forgotPassword,
     resetPassword,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

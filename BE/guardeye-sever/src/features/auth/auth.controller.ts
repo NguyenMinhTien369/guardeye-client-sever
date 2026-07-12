@@ -192,3 +192,65 @@ export const logout = async (
   }
 };
 
+/**
+ * PATCH /auth/profile
+ */
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await authService.updateProfile(req.user!._id.toString(), req.body);
+    new OKResponse({
+      message: "Cập nhật thông tin thành công",
+      data: result,
+    }).send(res);
+  } catch (error) {
+    next(new BadRequestError("Cập nhật thất bại"));
+  }
+};
+
+/**
+ * PUT /auth/password
+ */
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    await authService.changePassword(req.user!._id.toString(), oldPassword, newPassword);
+    new OKResponse({
+      message: "Đổi mật khẩu thành công",
+    }).send(res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Đổi mật khẩu thất bại";
+    next(new BadRequestError(message));
+  }
+};
+
+/**
+ * POST /auth/avatar
+ */
+export const uploadAvatar = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      throw new BadRequestError("Không tìm thấy file ảnh");
+    }
+    const result = await authService.uploadAvatar(req.user!._id.toString(), req.file);
+    new OKResponse({
+      message: "Cập nhật ảnh đại diện thành công",
+      data: result,
+    }).send(res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Cập nhật ảnh đại diện thất bại";
+    next(new BadRequestError(message));
+  }
+};
+

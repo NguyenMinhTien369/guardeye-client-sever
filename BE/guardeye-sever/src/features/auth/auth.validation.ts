@@ -126,11 +126,58 @@ export const verifyOtpSchema = z.object({
     .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
 });
 
+export const verifyOtpSchema = z.object({
+  email: z
+    .string({ required_error: "Email là bắt buộc" })
+    .trim()
+    .toLowerCase()
+    .email("Định dạng email không hợp lệ"),
+  
+  otp: z
+    .string({ required_error: "Mã OTP là bắt buộc" })
+    .length(6, "Mã OTP phải gồm 6 chữ số")
+    .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
+});
+
 export const refreshTokenSchema = z.object({
   refreshToken: z
     .string({ required_error: "Refresh token là bắt buộc" })
     .min(1, "Refresh token không được rỗng"),
 });
+
+export const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Tên phải có ít nhất 2 ký tự")
+    .max(50, "Tên không được vượt quá 50 ký tự")
+    .optional(),
+  notifications: z
+    .object({
+      email: z.boolean().optional(),
+      browser: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+export const changePasswordSchema = z
+  .object({
+    oldPassword: z.string({ required_error: "Mật khẩu hiện tại là bắt buộc" }),
+    newPassword: z
+      .string({ required_error: "Mật khẩu mới là bắt buộc" })
+      .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
+      .regex(
+        PASSWORD_STRENGTH_REGEX,
+        "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt (!@#$%^&*)",
+      ),
+    confirmNewPassword: z.string({
+      required_error: "Vui lòng xác nhận mật khẩu mới",
+    }),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmNewPassword"],
+  });
 
 // -----------------------------------------------------------------------------
 // 2. INFER TYPES TỪ SCHEMA
@@ -144,6 +191,8 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 // -----------------------------------------------------------------------------
 // 3. MIDDLEWARE FACTORY

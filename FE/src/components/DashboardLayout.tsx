@@ -5,8 +5,10 @@ import {
   FiLogOut,
   FiUser,
   FiChevronRight,
+  FiUsers,
+  FiMonitor,
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { PageSkeleton } from "./PageSkeleton";
 
@@ -17,8 +19,14 @@ export function DashboardLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  const isFirstMount = useRef(true);
+
   // Trigger skeleton loader on route change
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     setIsNavigating(true);
     const timer = setTimeout(() => {
       setIsNavigating(false);
@@ -42,9 +50,8 @@ export function DashboardLayout() {
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: FiGrid },
-    // thêm các mục khác nếu cần, ví dụ:
-    // { name: "Activity", path: "/activity", icon: FiActivity },
-    // { name: "Alerts", path: "/alerts", icon: FiBell },
+    { name: "Quản lý trẻ", path: "/children", icon: FiUsers },
+    { name: "Thiết bị", path: "/devices", icon: FiMonitor },
   ];
 
   return (
@@ -56,12 +63,20 @@ export function DashboardLayout() {
             <img src="/favicon.svg" alt="GuardEye Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} /> 
             GuardEye
           </div>
-          <div className="sidebar-logo-subtitle">Vigilant Clarity</div>
+
         </div>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
+            let isActive = location.pathname.startsWith(item.path);
+            
+            // Nếu đang ở trang báo cáo của trẻ (/children/:id/dashboard), 
+            // thì highlight tab Dashboard thay vì Quản lý trẻ
+            if (location.pathname.match(/^\/children\/[^/]+\/dashboard/)) {
+              if (item.path === "/dashboard") isActive = true;
+              if (item.path === "/children") isActive = false;
+            }
+
             const Icon = item.icon;
             return (
               <Link
@@ -78,10 +93,14 @@ export function DashboardLayout() {
 
         <div className="sidebar-footer">
           {user && (
-            <div className="sidebar-user-card">
+            <Link to="/profile" className="sidebar-user-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="user-avatar-wrapper">
-                <div className="user-avatar">
-                  <FiUser />
+                <div className="user-avatar" style={{ overflow: 'hidden' }}>
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:5000${user.avatarUrl}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <FiUser />
+                  )}
                 </div>
                 <div className="user-avatar-badge"></div>
               </div>
@@ -89,7 +108,7 @@ export function DashboardLayout() {
                 <span className="user-name">{user.name}</span>
               </div>
               <FiChevronRight className="user-arrow" />
-            </div>
+            </Link>
           )}
 
           <div className="sidebar-divider"></div>
@@ -110,8 +129,11 @@ export function DashboardLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="main-content">
-        {isNavigating ? <PageSkeleton /> : <Outlet />}
+      <main className={`main-content ${location.pathname.includes('/monitor') ? 'no-padding' : ''}`}>
+        <div style={{ display: isNavigating ? 'none' : 'block', height: '100%' }}>
+          <Outlet />
+        </div>
+        {isNavigating && <PageSkeleton />}
       </main>
 
       {/* Logout Confirmation Modal */}

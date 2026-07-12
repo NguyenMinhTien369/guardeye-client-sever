@@ -7,6 +7,7 @@ export const AUTH_ENDPOINTS = {
   LOGOUT: "/auth/logout",
   REFRESH_TOKEN: "/auth/refresh-token",
   FORGOT_PASSWORD: "/auth/forgot-password",
+  VERIFY_OTP: "/auth/verify-otp",
   RESET_PASSWORD: "/auth/reset-password",
   VERIFY_EMAIL: "/auth/verify-email",
 } as const;
@@ -15,4 +16,29 @@ export const TOKEN_KEYS = {
   ACCESS_TOKEN: "guardeye_access_token",
   REFRESH_TOKEN: "guardeye_refresh_token",
   USER: "guardeye_user",
+} as const;
+
+export const CHILDREN_ENDPOINTS = {
+  BASE: "/children",
+  BY_ID: (id: string) => `/children/${id}`,
+} as const;
+
+
+export const DEVICES_ENDPOINTS = {
+  BASE: "/devices",
+  BY_CHILD: (childId: string) => `/children/${childId}/devices`,
+  PAUSE: (id: string) => `/devices/${id}/pause`,
+  RESUME: (id: string) => `/devices/${id}/resume`,
+  BY_ID: (id: string) => `/devices/${id}`,
+} as const;
+
+export const DASHBOARD_ENDPOINTS = {
+  SUMMARY:     (childId: string) => `/dashboard/${childId}`,
+  ACTIVITY:    (deviceId: string) => `/dashboard/device/${deviceId}/activity`,
+  SCREENSHOTS: (deviceId: string) => `/screenshots/device/${deviceId}`,
+} as const;
+
+export const AI_ENDPOINTS = {
+  ANALYZE_URL: "/ai/analyze-url",
+  CHAT:        "/ai/chat",
 } as const;

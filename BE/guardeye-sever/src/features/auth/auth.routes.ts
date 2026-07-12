@@ -11,8 +11,11 @@ import {
   verifyEmailSchema,
   verifyOtpSchema,
   refreshTokenSchema,
+  updateProfileSchema,
+  changePasswordSchema,
 } from "./auth.validation";
 import { authenticate } from "../../shared/middlewares/auth.middleware";
+import { avatarUpload } from "./avatar.upload";
 
 // -----------------------------------------------------------------------------
 // AUTH ROUTES
@@ -68,6 +71,30 @@ router.post(
 // POST /auth/logout
 // Yêu cầu đăng nhập (authenticate) để biết user cần thu hồi token
 router.post("/logout", authenticate, authController.logout);
+
+// PATCH /auth/profile
+router.patch(
+  "/profile",
+  authenticate,
+  validate(updateProfileSchema),
+  authController.updateProfile
+);
+
+// PUT /auth/password
+router.put(
+  "/password",
+  authenticate,
+  validate(changePasswordSchema),
+  authController.changePassword
+);
+
+// POST /auth/avatar
+router.post(
+  "/avatar",
+  authenticate,
+  avatarUpload.single("avatar"),
+  authController.uploadAvatar
+);
 
 export default router;
 

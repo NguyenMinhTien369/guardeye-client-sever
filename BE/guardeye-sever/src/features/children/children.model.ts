@@ -16,6 +16,7 @@ export interface IChild extends Document {
   name: string;
   age: number;
   gender: GenderType;
+  avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +52,10 @@ const childSchema = new Schema<IChild, ChildModel>(
       type: String,
       enum: Object.values(GenderType),
       required: [true, "Giới tính của trẻ là bắt buộc"],
+    },
+    avatarUrl: {
+      type: String,
+      default: null,
     },
   },
   {

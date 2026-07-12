@@ -1,3 +1,63 @@
+/*
+// CODE CŨ (TỪ NHÁNH CỦA BẠN TRƯỚC KHI PULL):
+// src/features/dashboard/dashboard.service.ts
+
+// -----------------------------------------------------------------------------
+// DASHBOARD SERVICE — Business logic cho Dashboard FE.
+// Kiểm tra quyền sở hữu trước khi trả dữ liệu WindowEvent.
+// -----------------------------------------------------------------------------
+
+import dashboardRepository, { GetActivityParams } from "./dashboard.repository";
+
+export interface GetActivityResponse {
+  events: Array<{
+    id: string;
+    deviceId: string;
+    timestamp: string;
+    title: string;
+    processName: string;
+    dateKey: string;
+  }>;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  dateKey: string;
+}
+
+const dashboardService_old = {
+  async getActivity(
+    deviceId: string,
+    ownerId: string,
+    params: { dateKey?: string; page?: number; limit?: number },
+  ): Promise<GetActivityResponse> {
+    const isOwner = await dashboardRepository.verifyDeviceOwnership(deviceId, ownerId);
+    if (!isOwner) {
+      throw new Error("Bạn không có quyền xem dữ liệu thiết bị này");
+    }
+
+    const page  = Math.max(1, params.page  || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 30));
+    const dateKey = params.dateKey || new Date().toISOString().slice(0, 10);
+
+    const { events, total } = await dashboardRepository.getWindowEvents(
+      deviceId,
+      { dateKey, page, limit },
+    );
+
+    return {
+      events,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      dateKey,
+    };
+  },
+};
+*/
+
+// CODE MỚI TRÊN GITHUB:
 import mongoose from "mongoose";
 import { DashboardResponseDto } from "./dashboard.dto";
 import Device, { DeviceStatus } from "../devices/devices.model";
@@ -240,6 +300,68 @@ export class DashboardService {
         lastSyncText,
         isConnected: device.status === DeviceStatus.active
       }
+    };
+  }
+
+  async getActivity(
+    deviceId: string,
+    ownerId: string,
+    params: { startDate?: string; endDate?: string; search?: string; sort?: string; page?: number; limit?: number },
+  ) {
+    const isOwner = await Device.exists({ _id: deviceId, parentId: ownerId });
+    if (!isOwner) {
+      throw new Error("Bạn không có quyền xem dữ liệu thiết bị này");
+    }
+
+    const page  = Math.max(1, params.page  || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 20)); // Limit theo y/c phân trang là 20
+    
+    const query: any = { deviceId };
+
+    if (params.startDate && params.endDate) {
+      query.timestamp = {
+        $gte: new Date(params.startDate),
+        $lte: new Date(params.endDate)
+      };
+    } else {
+      // Fallback
+      const dateKey = new Date().toISOString().slice(0, 10);
+      query.dateKey = dateKey;
+    }
+
+    if (params.search) {
+      const regex = new RegExp(params.search, 'i');
+      query.$or = [
+        { title: regex },
+        { processName: regex }
+      ];
+    }
+
+    const sortOrder = params.sort === 'asc' ? 1 : -1;
+    const skip = (page - 1) * limit;
+
+    const events = await WindowEvent.find(query)
+      .sort({ timestamp: sortOrder })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await WindowEvent.countDocuments(query);
+
+    return {
+      events: events.map(e => ({
+        id: e._id.toString(),
+        deviceId: e.deviceId.toString(),
+        timestamp: e.timestamp.toISOString(),
+        title: e.title,
+        processName: e.processName,
+        dateKey: e.dateKey
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      dateKey: query.dateKey || "",
     };
   }
 }
