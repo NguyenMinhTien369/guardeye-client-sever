@@ -1,10 +1,9 @@
 import api from "./api";
 import { DASHBOARD_ENDPOINTS } from "../constants/api";
+import type { DashboardResponseDto } from "../types/dashboard.types";
 
 // -----------------------------------------------------------------------------
 // DASHBOARD SERVICE
-// 2 hàm gọi API: lịch sử WindowEvent + danh sách ảnh chụp màn hình.
-// Dùng axios instance đã setup Bearer token interceptor.
 // -----------------------------------------------------------------------------
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -57,12 +56,21 @@ interface ApiResponse<T> {
 
 export const dashboardService = {
   /**
+   * GET /dashboard/:childId
+   */
+  async getDashboardSummary(childId: string): Promise<DashboardResponseDto> {
+    const response = await api.get<{ data: DashboardResponseDto }>(
+      DASHBOARD_ENDPOINTS.SUMMARY(childId)
+    );
+    return response.data.data;
+  },
+
+  /**
    * GET /dashboard/device/:deviceId/activity
-   * Lấy lịch sử WindowEvent của 1 thiết bị theo ngày.
    */
   async getActivity(
     deviceId: string,
-    params?: { dateKey?: string; page?: number; limit?: number }
+    params?: { startDate?: string; endDate?: string; search?: string; sort?: string; page?: number; limit?: number }
   ): Promise<ActivityResponse> {
     const response = await api.get<ApiResponse<ActivityResponse>>(
       DASHBOARD_ENDPOINTS.ACTIVITY(deviceId),
@@ -73,11 +81,10 @@ export const dashboardService = {
 
   /**
    * GET /screenshots/device/:deviceId
-   * Lấy danh sách ảnh chụp màn hình của 1 thiết bị theo ngày.
    */
   async getScreenshots(
     deviceId: string,
-    params?: { dateKey?: string; page?: number; limit?: number }
+    params?: { startDate?: string; endDate?: string; search?: string; sort?: string; page?: number; limit?: number }
   ): Promise<ScreenshotsResponse> {
     const response = await api.get<ApiResponse<ScreenshotsResponse>>(
       DASHBOARD_ENDPOINTS.SCREENSHOTS(deviceId),

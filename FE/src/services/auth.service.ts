@@ -10,6 +10,7 @@ import type {
   ResetPasswordRequest,
   RefreshTokenRequest,
   RefreshTokenResponseData,
+  User,
 } from "../types/auth.types";
 
 export const authService = {
@@ -63,6 +64,16 @@ export const authService = {
       AUTH_ENDPOINTS.RESET_PASSWORD,
       data
     );
+    return response.data;
+  },
+
+  async verifyEmail(token: string): Promise<ApiResponse> {
+    const response = await api.post<ApiResponse>(AUTH_ENDPOINTS.VERIFY_EMAIL, { token });
+    return response.data;
+  },
+
+  async verifyOtp(email: string, otp: string): Promise<ApiResponse> {
+    const response = await api.post<ApiResponse>(AUTH_ENDPOINTS.VERIFY_OTP, { email, otp });
     return response.data;
   },
 

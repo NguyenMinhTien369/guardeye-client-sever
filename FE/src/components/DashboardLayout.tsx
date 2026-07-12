@@ -8,7 +8,7 @@ import {
   FiUsers,
   FiMonitor,
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { PageSkeleton } from "./PageSkeleton";
 
@@ -19,8 +19,14 @@ export function DashboardLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  const isFirstMount = useRef(true);
+
   // Trigger skeleton loader on route change
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     setIsNavigating(true);
     const timer = setTimeout(() => {
       setIsNavigating(false);
@@ -57,12 +63,20 @@ export function DashboardLayout() {
             <img src="/favicon.svg" alt="GuardEye Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} /> 
             GuardEye
           </div>
-          <div className="sidebar-logo-subtitle">Vigilant Clarity</div>
+
         </div>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
+            let isActive = location.pathname.startsWith(item.path);
+            
+            // Nếu đang ở trang báo cáo của trẻ (/children/:id/dashboard), 
+            // thì highlight tab Dashboard thay vì Quản lý trẻ
+            if (location.pathname.match(/^\/children\/[^/]+\/dashboard/)) {
+              if (item.path === "/dashboard") isActive = true;
+              if (item.path === "/children") isActive = false;
+            }
+
             const Icon = item.icon;
             return (
               <Link
@@ -115,8 +129,11 @@ export function DashboardLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="main-content">
-        {isNavigating ? <PageSkeleton /> : <Outlet />}
+      <main className={`main-content ${location.pathname.includes('/monitor') ? 'no-padding' : ''}`}>
+        <div style={{ display: isNavigating ? 'none' : 'block', height: '100%' }}>
+          <Outlet />
+        </div>
+        {isNavigating && <PageSkeleton />}
       </main>
 
       {/* Logout Confirmation Modal */}

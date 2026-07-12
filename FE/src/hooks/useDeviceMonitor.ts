@@ -18,12 +18,18 @@ interface UseDeviceMonitorState {
   totalScreenshots: number;
   eventPage: number;
   screenshotPage: number;
+  eventTotalPages: number;
+  screenshotTotalPages: number;
+  search: string;
+  sort: "desc" | "asc";
 }
 
 interface UseDeviceMonitorReturn extends UseDeviceMonitorState {
   changeDate: (dateKey: string) => void;
-  loadMoreEvents: () => void;
-  loadMoreScreenshots: () => void;
+  setSearch: (term: string) => void;
+  setSort: (order: "desc" | "asc") => void;
+  setEventPage: (page: number) => void;
+  setScreenshotPage: (page: number) => void;
   refresh: () => void;
 }
 
@@ -43,22 +49,34 @@ export function useDeviceMonitor(deviceId: string): UseDeviceMonitorReturn {
     totalScreenshots: 0,
     eventPage: 1,
     screenshotPage: 1,
+    eventTotalPages: 1,
+    screenshotTotalPages: 1,
+    search: "",
+    sort: "desc",
   });
 
   // ── Fetch WindowEvents ──────────────────────────────────────────────────────
   const fetchEvents = useCallback(
-    async (dateKey: string, page: number, append = false) => {
+    async (dateKey: string, page: number, search: string, sort: "desc" | "asc") => {
       setState((s) => ({ ...s, loadingEvents: true, error: null }));
       try {
+        // Parse startDate / endDate theo giờ địa phương của trình duyệt
+        const start = new Date(`${dateKey}T00:00:00.000`);
+        const end = new Date(`${dateKey}T23:59:59.999`);
+        
         const res = await dashboardService.getActivity(deviceId, {
-          dateKey,
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+          search: search || undefined,
+          sort,
           page,
-          limit: 30,
+          limit: 20,
         });
         setState((s) => ({
           ...s,
-          events: append ? [...s.events, ...res.events] : res.events,
+          events: res.events,
           totalEvents: res.total,
+          eventTotalPages: res.totalPages,
           loadingEvents: false,
           eventPage: page,
         }));
@@ -78,10 +96,16 @@ export function useDeviceMonitor(deviceId: string): UseDeviceMonitorReturn {
     async (dateKey: string, page: number, append = false) => {
       setState((s) => ({ ...s, loadingScreenshots: true }));
       try {
+        const start = new Date(`${dateKey}T00:00:00.000`);
+        const end = new Date(`${dateKey}T23:59:59.999`);
+        
         const res = await dashboardService.getScreenshots(deviceId, {
-          dateKey,
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+          search: state.search || undefined,
+          sort: state.sort,
           page,
-          limit: 20,
+          limit: 12,
         });
         setState((s) => ({
           ...s,
@@ -89,6 +113,7 @@ export function useDeviceMonitor(deviceId: string): UseDeviceMonitorReturn {
             ? [...s.screenshots, ...res.screenshots]
             : res.screenshots,
           totalScreenshots: res.total,
+          screenshotTotalPages: res.totalPages,
           loadingScreenshots: false,
           screenshotPage: page,
         }));
@@ -99,57 +124,63 @@ export function useDeviceMonitor(deviceId: string): UseDeviceMonitorReturn {
     [deviceId]
   );
 
-  // ── Initial load & khi deviceId thay đổi ───────────────────────────────────
+  // ── Initial load & khi state thay đổi ───────────────────────────────────
   useEffect(() => {
     if (!deviceId) return;
-    const today = todayDateKey();
+    fetchEvents(state.currentDate, state.eventPage, state.search, state.sort);
+  }, [deviceId, fetchEvents, state.currentDate, state.eventPage, state.search, state.sort]);
+
+  useEffect(() => {
+    if (!deviceId) return;
+    fetchScreenshots(state.currentDate, state.screenshotPage);
+  }, [deviceId, fetchScreenshots, state.currentDate, state.screenshotPage]);
+
+  // ── Actions ─────────────────────────────────────────────────────────────────
+  const changeDate = useCallback((dateKey: string) => {
     setState((s) => ({
       ...s,
-      currentDate: today,
-      events: [],
-      screenshots: [],
+      currentDate: dateKey,
       eventPage: 1,
       screenshotPage: 1,
     }));
-    fetchEvents(today, 1);
-    fetchScreenshots(today, 1);
-  }, [deviceId, fetchEvents, fetchScreenshots]);
+  }, []);
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
-  const changeDate = useCallback(
-    (dateKey: string) => {
-      setState((s) => ({
-        ...s,
-        currentDate: dateKey,
-        events: [],
-        screenshots: [],
-        eventPage: 1,
-        screenshotPage: 1,
-      }));
-      fetchEvents(dateKey, 1);
-      fetchScreenshots(dateKey, 1);
-    },
-    [fetchEvents, fetchScreenshots]
-  );
+  const setSearch = useCallback((term: string) => {
+    setState((s) => ({
+      ...s,
+      search: term,
+      eventPage: 1,
+    }));
+  }, []);
 
-  const loadMoreEvents = useCallback(() => {
-    const nextPage = state.eventPage + 1;
-    if (state.events.length < state.totalEvents) {
-      fetchEvents(state.currentDate, nextPage, true);
-    }
-  }, [state, fetchEvents]);
+  const setSort = useCallback((order: "desc" | "asc") => {
+    setState((s) => ({
+      ...s,
+      sort: order,
+      eventPage: order === "desc" ? 1 : Math.max(1, s.eventTotalPages),
+    }));
+  }, []);
 
-  const loadMoreScreenshots = useCallback(() => {
-    const nextPage = state.screenshotPage + 1;
-    if (state.screenshots.length < state.totalScreenshots) {
-      fetchScreenshots(state.currentDate, nextPage, true);
-    }
-  }, [state, fetchScreenshots]);
+  const setEventPage = useCallback((page: number) => {
+    setState((s) => ({ ...s, eventPage: page }));
+  }, []);
+
+  const setScreenshotPage = useCallback((page: number) => {
+    setState((s) => ({ ...s, screenshotPage: page }));
+  }, []);
 
   const refresh = useCallback(() => {
-    fetchEvents(state.currentDate, 1);
-    fetchScreenshots(state.currentDate, 1);
-  }, [state.currentDate, fetchEvents, fetchScreenshots]);
+    fetchEvents(state.currentDate, state.eventPage, state.search, state.sort);
+    fetchScreenshots(state.currentDate, state.screenshotPage);
+  }, [state.currentDate, state.eventPage, state.search, state.sort, fetchEvents, fetchScreenshots]);
 
-  return { ...state, changeDate, loadMoreEvents, loadMoreScreenshots, refresh };
+  return { 
+    ...state, 
+    changeDate, 
+    setSearch, 
+    setSort, 
+    setEventPage, 
+    setScreenshotPage, 
+    refresh 
+  };
 }

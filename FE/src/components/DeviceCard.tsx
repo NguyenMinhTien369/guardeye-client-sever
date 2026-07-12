@@ -48,11 +48,17 @@ export function DeviceCard({ device, childName, onPause, onResume, onDelete, onV
       {/* Paused overlay banner */}
       {device.isPaused && (
         <div className="device-paused-banner">
-          <FiPauseCircle />
-          <span>Đang tạm dừng giám sát</span>
-          {device.pausedUntil && (
-            <span className="paused-until">· đến {formatDateTime(device.pausedUntil)}</span>
-          )}
+          <div className="device-paused-banner-title">
+            <FiPauseCircle />
+            <span>Đang tạm dừng giám sát</span>
+          </div>
+          {device.pausedSince && device.pausedUntil ? (
+            <div className="paused-until">(từ {formatDateTime(device.pausedSince)} đến {formatDateTime(device.pausedUntil)})</div>
+          ) : device.pausedSince ? (
+            <div className="paused-until">(từ {formatDateTime(device.pausedSince)})</div>
+          ) : device.pausedUntil ? (
+            <div className="paused-until">(đến {formatDateTime(device.pausedUntil)})</div>
+          ) : null}
         </div>
       )}
 
@@ -102,11 +108,6 @@ export function DeviceCard({ device, childName, onPause, onResume, onDelete, onV
           <FiClock style={{ display: "inline", marginRight: 4 }} />
           Tạo: {formatDateTime(device.createdAt)}
         </span>
-        {device.isPaused && device.pausedSince && (
-          <span className="device-ts device-ts--paused">
-            Dừng từ: {formatDateTime(device.pausedSince)}
-          </span>
-        )}
       </div>
 
       {/* Action Buttons */}
@@ -134,16 +135,6 @@ export function DeviceCard({ device, childName, onPause, onResume, onDelete, onV
         )}
 
         <button
-          id={`delete-device-${device.id}`}
-          className="btn btn-ghost device-action-btn device-delete-btn"
-          onClick={() => onDelete(device)}
-          title="Xóa thiết bị"
-        >
-          <FiTrash2 />
-          Xóa
-        </button>
-
-        <button
           id={`monitor-device-${device.id}`}
           className="btn btn-primary device-action-btn"
           onClick={() => onViewMonitor(device)}
@@ -151,6 +142,15 @@ export function DeviceCard({ device, childName, onPause, onResume, onDelete, onV
         >
           <FiActivity />
           Xem hoạt động
+        </button>
+
+        <button
+          id={`delete-device-${device.id}`}
+          className="btn btn-ghost device-action-btn device-delete-btn"
+          onClick={() => onDelete(device)}
+          title="Xóa thiết bị"
+        >
+          <FiTrash2 />
         </button>
       </div>
     </div>

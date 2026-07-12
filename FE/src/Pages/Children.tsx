@@ -5,6 +5,7 @@ import axios from "axios";
 import { useChildren } from "../hooks/useChildren";
 import { ChildCard } from "../components/ChildCard";
 import { ChildFormModal } from "../components/ChildFormModal";
+import { ChildRightPanel } from "../components/ChildRightPanel";
 import type { Child, CreateChildRequest, GenderType } from "../types/children.types";
 
 // ─── Delete Confirm Modal (inline, nhẹ hơn tách file) ─────────────────────
@@ -90,9 +91,10 @@ export function Children() {
   } = useChildren();
 
   // Modal states
-  const [formModalOpen, setFormModalOpen] = useState(false);
-  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
 
@@ -104,15 +106,17 @@ export function Children() {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleOpenCreate = () => {
-    setFormMode("create");
-    setSelectedChild(null);
-    setFormModalOpen(true);
+    setCreateModalOpen(true);
   };
 
-  const handleOpenEdit = (child: Child) => {
-    setFormMode("edit");
+  const handleOpenPanel = (child: Child) => {
     setSelectedChild(child);
-    setFormModalOpen(true);
+    setIsRightPanelOpen(true);
+  };
+
+  const handleClosePanel = () => {
+    setIsRightPanelOpen(false);
+    setTimeout(() => setSelectedChild(null), 300); // delay to let animation finish
   };
 
   const handleOpenDelete = (child: Child) => {
@@ -124,20 +128,7 @@ export function Children() {
   const handleCreate = async (data: CreateChildRequest) => {
     await createChild(data);
     toast.success(`Đã thêm hồ sơ bé ${data.name} thành công!`);
-  };
-
-  // API 4: PUT /children/:id
-  const handleUpdate = async (data: { name: string; age: number; gender: GenderType }) => {
-    if (!selectedChild) return;
-    try {
-      await updateChild(selectedChild.id, data);
-      toast.success(`Đã cập nhật hồ sơ bé ${data.name} thành công!`);
-    } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? err.response?.data?.message || "Cập nhật thất bại"
-        : "Cập nhật thất bại";
-      throw new Error(msg);
-    }
+    setCreateModalOpen(false);
   };
 
   // API 5: DELETE /children/:id
@@ -146,6 +137,9 @@ export function Children() {
     try {
       await deleteChild(childToDelete.id);
       toast.success(`Đã xóa hồ sơ bé ${childToDelete.name}`);
+      if (selectedChild?.id === childToDelete.id) {
+        handleClosePanel();
+      }
       setDeleteModalOpen(false);
       setChildToDelete(null);
     } catch (err) {
@@ -157,17 +151,16 @@ export function Children() {
     }
   };
 
-  const handleFormSubmit = async (data: { name: string; age: number; gender: GenderType }) => {
-    if (formMode === "create") {
-      await handleCreate(data);
-    } else {
-      await handleUpdate(data);
-    }
+  // Handle right panel update sync
+  const handlePanelUpdate = (updatedChild: Child) => {
+    // Reload children to reflect changes
+    loadChildren();
+    setSelectedChild(updatedChild);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="children-page">
+    <div className={`children-page ${isRightPanelOpen ? 'panel-open' : ''}`}>
       {/* Page Header */}
       <div className="children-page-header">
         <div className="children-page-title-group">
@@ -236,24 +229,38 @@ export function Children() {
             <ChildCard
               key={child.id}
               child={child}
-              onEdit={handleOpenEdit}
+              onEdit={handleOpenPanel}
               onDelete={handleOpenDelete}
             />
           ))}
         </div>
       )}
 
-      {/* Create / Edit Modal — API 1 & 4 */}
+      {/* Create Modal */}
       <ChildFormModal
-        isOpen={formModalOpen}
-        mode={formMode}
-        child={selectedChild}
+        isOpen={createModalOpen}
+        mode="create"
+        child={null}
         isSubmitting={isSubmitting}
-        onClose={() => setFormModalOpen(false)}
-        onSubmit={handleFormSubmit}
+        onClose={() => setCreateModalOpen(false)}
+        onSubmit={handleCreate}
       />
 
-      {/* Delete Confirm Modal — API 5 */}
+      {/* Right Panel for Editing & Avatar */}
+      <ChildRightPanel
+        isOpen={isRightPanelOpen}
+        child={selectedChild}
+        onClose={handleClosePanel}
+        onUpdate={handlePanelUpdate}
+        onDeleteRequest={handleOpenDelete}
+        onViewDashboard={(childId) => {
+          // Navigate to dashboard will be handled by useNavigate if we wanted, 
+          // or we can just let it redirect
+          window.location.href = `/children/${childId}/dashboard`;
+        }}
+      />
+
+      {/* Delete Confirm Modal */}
       {deleteModalOpen && childToDelete && (
         <DeleteConfirmModal
           child={childToDelete}

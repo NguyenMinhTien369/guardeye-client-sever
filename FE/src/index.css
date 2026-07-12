@@ -1268,6 +1268,13 @@ a:hover {
   min-width: 0; /* Prevent flex overflow */
 }
 
+.main-content.no-padding {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 @media (min-width: 1024px) {
   .auth-brand-panel {
     display: flex;
@@ -1285,6 +1292,11 @@ a:hover {
   flex-direction: column;
   gap: 1.5rem;
   animation: fade-in 0.3s ease-out;
+  transition: padding-right var(--transition-normal) ease;
+}
+
+.children-page.panel-open {
+  padding-right: 420px;
 }
 
 /* ── Page Header ─────────────────────────────────────────── */
@@ -1391,6 +1403,25 @@ a:hover {
 
 .child-card:hover::before {
   opacity: 1;
+}
+
+.child-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.child-card.clickable:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 8px 24px rgba(0, 40, 85, 0.12);
+}
+
+.delete-btn-custom {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: var(--error) !important;
+  border: 1px solid var(--error) !important;
+}
+.delete-btn-custom:hover {
+  background-color: var(--error) !important;
+  color: white !important;
 }
 
 /* Avatar */
@@ -1721,8 +1752,41 @@ a:hover {
 /* ── Devices Grid ────────────────────────────────────────── */
 .devices-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.devices-split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.devices-split-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.split-empty-text {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  text-align: center;
+  border: 1px dashed var(--border-color);
+}
+
+@media (max-width: 1024px) {
+  .devices-split-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Device Card ─────────────────────────────────────────── */
@@ -1750,19 +1814,31 @@ a:hover {
 /* Paused Banner */
 .device-paused-banner {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1.25rem;
   background: #fffbeb;
   border-bottom: 1px solid #fde68a;
+}
+
+.device-paused-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.8rem;
   font-weight: 600;
   color: #92400e;
 }
 
 .paused-until {
-  font-weight: 400;
-  color: #b45309;
+  font-size: 0.85rem;
+  color: #52525b;
+  margin-left: 1.5rem;
+}
+
+.paused-until .paused-time {
+  font-weight: 700;
+  color: #000000;
 }
 
 /* Card Header */
@@ -1931,7 +2007,17 @@ a:hover {
 
 .device-delete-btn {
   flex: 0 0 auto;
-  min-width: 80px;
+  width: 40px;
+  height: 38px;
+  min-width: 40px;
+  padding: 0 !important;
+  color: var(--error) !important;
+  border: 1px solid var(--error) !important;
+  background-color: var(--error-bg) !important;
+  transition: all 0.2s ease;
+}
+.device-delete-btn:hover {
+  background-color: #fecaca !important;
 }
 
 /* ── Device Skeleton ─────────────────────────────────────── */
@@ -2585,7 +2671,8 @@ a:hover {
 /* Dropdown panel */
 .time-dropdown-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  bottom: calc(100% + 6px);
+  top: auto;
   left: 0;
   right: 0;
   z-index: 20;
@@ -2850,12 +2937,23 @@ a:hover {
   border-color: var(--border-focus);
 }
 .dm-date-input {
+  position: relative;
   border: none;
   background: transparent;
   outline: none;
   font-family: inherit;
   font-size: 0.875rem;
   color: var(--text-primary);
+  cursor: pointer;
+}
+
+.dm-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
 }
 
@@ -3096,6 +3194,25 @@ a:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--accent-primary);
 }
+
+.child-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.child-card.clickable:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 8px 24px rgba(0, 40, 85, 0.12);
+}
+
+.delete-btn-custom {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: var(--error) !important;
+  border: 1px solid var(--error) !important;
+}
+.delete-btn-custom:hover {
+  background-color: var(--error) !important;
+  color: white !important;
+}
 .dm-gallery.list .dm-gallery-item {
   display: flex;
   flex-direction: row;
@@ -3218,8 +3335,8 @@ a:hover {
 /* ── Page container (bọc ngoài dm-wrapper + ai-chat-panel) ── */
 .dm-page-container {
   display: flex;
-  align-items: stretch;    /* Các cột stretch theo chiều cao */
-  height: 100%;            /* Chiếm toàn bộ main-content */
+  align-items: stretch;
+  height: 100%;
   overflow: hidden;
   position: relative;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3309,7 +3426,7 @@ a:hover {
 .ai-chat-panel {
   width: 0;
   min-width: 0;
-  max-width: 560px;
+  /* Removed max-width to allow panel to span fully */
   height: 100%;
   background: var(--bg-secondary);
   border-left: none;          /* Ẩn border khi đóng */
@@ -3325,7 +3442,7 @@ a:hover {
 }
 
 .ai-chat-panel.open {
-  width: 45%;
+  flex: 1;
   min-width: 360px;
   border-left: 1px solid var(--border-color);
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
@@ -3809,3 +3926,51 @@ a:hover {
   }
 }
 
+/* Markdown Styles for AI Chat */
+.markdown-body p { margin-bottom: 0.75rem; }
+.markdown-body p:last-child { margin-bottom: 0; }
+/* Markdown Styles for AI Chat */
+.markdown-body p { margin-bottom: 0.75rem; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body strong { font-weight: 600; color: inherit; }
+.markdown-body ul, .markdown-body ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
+.markdown-body li { margin-bottom: 0.25rem; }
+.markdown-body code { background: rgba(0,0,0,0.05); padding: 0.125rem 0.25rem; border-radius: 4px; font-family: monospace; }
+.markdown-body pre { background: rgba(0,0,0,0.05); padding: 0.75rem; border-radius: 8px; overflow-x: auto; margin-bottom: 0.75rem; }
+
+/* ── React DatePicker Custom Styles ── */
+.react-datepicker-wrapper-custom {
+  position: relative;
+  width: 100%;
+}
+
+.react-datepicker-wrapper-custom input {
+  padding-right: 36px !important;
+  text-align: left !important;
+  padding-left: 12px !important;
+}
+
+.react-datepicker-wrapper-custom .react-datepicker__close-icon {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.react-datepicker-wrapper-custom .react-datepicker__close-icon::after {
+  background-color: var(--warning);
+  color: white;
+  font-size: 14px;
+  height: 20px;
+  width: 20px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 0;
+  content: "×";
+}

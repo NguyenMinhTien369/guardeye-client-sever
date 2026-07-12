@@ -1,5 +1,5 @@
 import { useState, useMemo, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FiShield, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle } from "react-icons/fi";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
@@ -47,8 +47,10 @@ function getActiveSegments(strength: PasswordStrength): number {
 }
 
 export function ResetPassword() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const email: string = (location.state as any)?.email || "";
+  const otp: string = (location.state as any)?.otp || "";
   const { resetPassword } = useAuth();
 
   const [newPassword, setNewPassword] = useState("");
@@ -92,15 +94,16 @@ export function ResetPassword() {
     setError("");
     setSuccessMessage("");
 
-    if (!validate() || !token) return;
+    if (!validate()) return;
 
     setIsSubmitting(true);
     try {
-      const message = await resetPassword({ token, newPassword, confirmNewPassword });
-      setSuccessMessage(message);
+      await resetPassword({ email, otp, newPassword, confirmNewPassword } as any);
+      setSuccessMessage("Đặt lại mật khẩu thành công! Đang chuyển hướng...");
       setNewPassword("");
       setConfirmNewPassword("");
       setFieldErrors({});
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined;
@@ -117,8 +120,8 @@ export function ResetPassword() {
     }
   }
 
-  // No token in URL — show error state
-  if (!token) {
+  // No email/otp in state — user navigated here directly
+  if (!email || !otp) {
     return (
       <>
         <div className="auth-form-header">
@@ -132,8 +135,7 @@ export function ResetPassword() {
         <div className="alert alert-error">
           <FiAlertCircle className="alert-icon" />
           <span>
-            Không tìm thấy token đặt lại mật khẩu. Vui lòng yêu cầu liên kết
-            đặt lại mật khẩu mới.
+          Không tìm thấy thông tin xác thực. Vui lòng yêu cầu lại mã OTP.
           </span>
         </div>
 

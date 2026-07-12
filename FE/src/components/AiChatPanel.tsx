@@ -1,4 +1,8 @@
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import type { UrlAnalysisResult, ChatMessage } from "../services/ai.service";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -28,6 +32,9 @@ function SafetyBadge({ level }: { level: UrlAnalysisResult["safetyLevel"] }) {
   return <span className={`ai-safety-badge ${className}`}>{label}</span>;
 }
 
+const remarkPlugins = [remarkMath];
+const rehypePlugins = [rehypeKatex];
+
 function TypingDots() {
   return (
     <div className="ai-typing-dots">
@@ -46,7 +53,11 @@ function AnalysisCard({ analysis }: { analysis: UrlAnalysisResult }) {
         </div>
       </div>
 
-      <p className="ai-description">{analysis.description}</p>
+      <div className="ai-description markdown-body">
+        <ReactMarkdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>
+          {analysis.description}
+        </ReactMarkdown>
+      </div>
 
       {analysis.mainActivities.length > 0 && (
         <div className="ai-activities">
@@ -61,7 +72,11 @@ function AnalysisCard({ analysis }: { analysis: UrlAnalysisResult }) {
 
       <div className="ai-advice">
         <span className="ai-advice-icon">💡</span>
-        <p>{analysis.parentAdvice}</p>
+        <div className="ai-advice-content markdown-body">
+          <ReactMarkdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>
+            {analysis.parentAdvice}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   );
@@ -198,8 +213,10 @@ export function AiChatPanel({
                   <div className="ai-message-avatar">
                     {msg.role === "ai" ? "AI" : "You"}
                   </div>
-                  <div className="ai-message-bubble">
-                    {msg.content}
+                  <div className="ai-message-bubble markdown-body">
+                    <ReactMarkdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>
+                      {msg.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
               ))}

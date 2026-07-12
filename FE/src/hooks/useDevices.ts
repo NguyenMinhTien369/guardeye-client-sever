@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { devicesService } from "../services/devices.service";
 import type {
   Device,
@@ -30,6 +30,8 @@ export function useDevices(): UseDevicesReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+
 
   /**
    * API 2: GET /devices — Load danh sách
@@ -117,6 +119,27 @@ export function useDevices(): UseDevicesReturn {
       setIsSubmitting(false);
     }
   }, []);
+
+  // Tự động reload/resume khi thời gian tạm dừng kết thúc
+  useEffect(() => {
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    devices.forEach((device) => {
+      if (device.isPaused && device.pausedUntil) {
+        const timeUntilEnd = new Date(device.pausedUntil).getTime() - Date.now();
+        if (timeUntilEnd > 0) {
+          const t = setTimeout(() => {
+            // Khi hết giờ, gọi API resume để cập nhật trạng thái
+            resumeDevice(device.id).catch(console.error);
+          }, timeUntilEnd);
+          timeouts.push(t);
+        } else {
+          // Nếu đã hết giờ mà vẫn báo isPaused (do DB chưa update/chưa reload), tự động resume
+          resumeDevice(device.id).catch(console.error);
+        }
+      }
+    });
+    return () => timeouts.forEach(clearTimeout);
+  }, [devices, resumeDevice]);
 
   return {
     devices,

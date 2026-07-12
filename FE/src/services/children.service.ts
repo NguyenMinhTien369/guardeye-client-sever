@@ -75,4 +75,22 @@ export const childrenService = {
     );
     return response.data;
   },
+
+  /**
+   * POST /children/:id/avatar
+   */
+  async uploadAvatar(id: string, file: File): Promise<UpdateChildResponse> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await api.post<UpdateChildResponse>(
+      CHILDREN_ENDPOINTS.BY_ID(id) + "/avatar",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
 };

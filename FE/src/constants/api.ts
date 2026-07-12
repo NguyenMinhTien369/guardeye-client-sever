@@ -7,6 +7,7 @@ export const AUTH_ENDPOINTS = {
   LOGOUT: "/auth/logout",
   REFRESH_TOKEN: "/auth/refresh-token",
   FORGOT_PASSWORD: "/auth/forgot-password",
+  VERIFY_OTP: "/auth/verify-otp",
   RESET_PASSWORD: "/auth/reset-password",
   VERIFY_EMAIL: "/auth/verify-email",
 } as const;
@@ -22,6 +23,7 @@ export const CHILDREN_ENDPOINTS = {
   BY_ID: (id: string) => `/children/${id}`,
 } as const;
 
+
 export const DEVICES_ENDPOINTS = {
   BASE: "/devices",
   BY_CHILD: (childId: string) => `/children/${childId}/devices`,
@@ -31,6 +33,7 @@ export const DEVICES_ENDPOINTS = {
 } as const;
 
 export const DASHBOARD_ENDPOINTS = {
+  SUMMARY:     (childId: string) => `/dashboard/${childId}`,
   ACTIVITY:    (deviceId: string) => `/dashboard/device/${deviceId}/activity`,
   SCREENSHOTS: (deviceId: string) => `/screenshots/device/${deviceId}`,
 } as const;

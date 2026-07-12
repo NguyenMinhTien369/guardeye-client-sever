@@ -1,4 +1,5 @@
-import { FiEdit2, FiTrash2, FiUser } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiUser, FiPieChart } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import type { Child } from "../types/children.types";
 
 interface ChildCardProps {
@@ -37,6 +38,7 @@ function formatDate(dateString: string): string {
 }
 
 export function ChildCard({ child, onEdit, onDelete }: ChildCardProps) {
+  const navigate = useNavigate();
   const genderConfig = GENDER_CONFIG[child.gender];
   const avatarColor = getAvatarColor(child.name);
   const initials = child.name
@@ -46,15 +48,31 @@ export function ChildCard({ child, onEdit, onDelete }: ChildCardProps) {
     .join("")
     .toUpperCase();
 
+  const handleCardClick = () => {
+    onEdit(child); // In this new design, onEdit actually opens the Right Panel
+  };
+
+  const getAvatarFullUrl = (avatarUrl?: string | null) => {
+    if (!avatarUrl) return null;
+    if (avatarUrl.startsWith("http")) return avatarUrl;
+    return `http://localhost:5000${avatarUrl}`;
+  };
+
+  const avatarUrl = getAvatarFullUrl(child.avatarUrl);
+
   return (
-    <div className="child-card">
+    <div className="child-card clickable" onClick={handleCardClick}>
       {/* Avatar */}
       <div
         className="child-avatar"
-        style={{ backgroundColor: avatarColor }}
+        style={{ backgroundColor: avatarUrl ? 'transparent' : avatarColor, overflow: 'hidden' }}
         aria-label={`Avatar của ${child.name}`}
       >
-        {initials || <FiUser />}
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          initials || <FiUser />
+        )}
       </div>
 
       {/* Info */}
@@ -70,27 +88,28 @@ export function ChildCard({ child, onEdit, onDelete }: ChildCardProps) {
             {genderConfig.emoji} {genderConfig.label}
           </span>
         </div>
-
-        <div className="child-date">
-          Tạo lúc: {formatDate(child.createdAt)}
-        </div>
       </div>
 
       {/* Actions */}
       <div className="child-actions">
         <button
-          id={`edit-child-${child.id}`}
-          className="child-action-btn edit"
-          onClick={() => onEdit(child)}
-          aria-label={`Chỉnh sửa hồ sơ ${child.name}`}
-          title="Chỉnh sửa"
+          className="child-action-btn view-dashboard"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/children/${child.id}/dashboard`);
+          }}
+          aria-label={`Xem tổng quan ${child.name}`}
+          title="Xem báo cáo"
         >
-          <FiEdit2 />
+          <FiPieChart />
         </button>
         <button
           id={`delete-child-${child.id}`}
-          className="child-action-btn delete"
-          onClick={() => onDelete(child)}
+          className="child-action-btn delete-btn-custom"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(child);
+          }}
           aria-label={`Xóa hồ sơ ${child.name}`}
           title="Xóa"
         >

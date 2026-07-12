@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -15,6 +15,7 @@ import {
   FiClock,
   FiAlertCircle,
   FiZap,
+  FiSearch,
 } from "react-icons/fi";
 import { useDeviceMonitor } from "../hooks/useDeviceMonitor";
 import { useAiPanel, parseTitleToUrl } from "../hooks/useAiPanel";
@@ -46,6 +47,12 @@ function formatDateTime(iso: string): string {
   });
 }
 
+function formatUIDate(dateKey: string): string {
+  if (!dateKey) return "";
+  const [y, m, d] = dateKey.split("-");
+  return `${d}-${m}-${y}`;
+}
+
 function getProcessDisplayName(processName: string): string {
   const map: Record<string, string> = {
     "chrome.exe": "Google Chrome",
@@ -68,6 +75,36 @@ function getProcessDisplayName(processName: string): string {
   return map[processName.toLowerCase()] || processName.replace(".exe", "");
 }
 
+function getCategoryTag(processName: string, title: string): string {
+  const p = processName.toLowerCase();
+  const t = title.toLowerCase();
+
+  if (p.includes("chrome") || p.includes("edge") || p.includes("brave") || p.includes("firefox") || p.includes("opera") || p.includes("cốc cốc") || p.includes("browser")) {
+    if (t.includes("youtube") || t.includes("netflix") || t.includes("phim") || t.includes("video") || t.includes("nhạc")) return "Giải trí";
+    if (t.includes("facebook") || t.includes("zalo") || t.includes("messenger") || t.includes("instagram") || t.includes("tiktok") || t.includes("twitter")) return "Mạng xã hội";
+    if (t.includes("learn") || t.includes("edu") || t.includes("study") || t.includes("học") || t.includes("school") || t.includes("course") || t.includes("tutorial")) return "Học tập";
+    if (t.includes("game") || t.includes("play") || t.includes("trò chơi")) return "Trò chơi";
+    return "Trình duyệt";
+  }
+
+  if (p.includes("discord") || p.includes("slack") || p.includes("zalo") || p.includes("teams")) return "Mạng xã hội";
+  if (p.includes("steam") || p.includes("minecraft") || p.includes("lol") || p.includes("game") || p.includes("roblox") || p.includes("valorant")) return "Trò chơi";
+  if (p.includes("word") || p.includes("excel") || p.includes("powerpnt") || p.includes("code") || p.includes("devenv") || p.includes("zoom") || p.includes("idea")) return "Học tập";
+
+  return "Khác";
+}
+
+function getCategoryColor(category: string): string {
+  switch (category) {
+    case "Mạng xã hội": return "#3B82F6";
+    case "Giải trí": return "#F59E0B";
+    case "Học tập": return "#10B981";
+    case "Trình duyệt": return "#8B5CF6";
+    case "Trò chơi": return "#EF4444";
+    default: return "#6B7280";
+  }
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function DatePicker({
@@ -77,15 +114,33 @@ function DatePicker({
   value: string;
   onChange: (d: string) => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <div className="dm-date-picker">
+    <div 
+      className="dm-date-picker"
+      onClick={() => {
+        try {
+          if (inputRef.current) {
+            (inputRef.current as any).showPicker();
+          }
+        } catch (e) {
+          inputRef.current?.focus();
+        }
+      }}
+      style={{ cursor: "pointer" }}
+    >
       <FiCalendar />
       <input
+        ref={inputRef}
         type="date"
         value={value}
         max={new Date().toISOString().slice(0, 10)}
         onChange={(e) => onChange(e.target.value)}
         className="dm-date-input"
+        style={{ cursor: "pointer" }}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.preventDefault()}
       />
     </div>
   );
@@ -96,6 +151,64 @@ function EmptyState({ icon, text }: { icon: ReactNode; text: string }) {
     <div className="dm-empty">
       <div className="dm-empty-icon">{icon}</div>
       <p>{text}</p>
+    </div>
+  );
+}
+
+function Pagination({ page, totalPages, onPageChange }: { page: number, totalPages: number, onPageChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 6) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+    
+    pages.push(1);
+    
+    if (page <= 3) {
+      pages.push(2, 3, 4);
+      pages.push('...');
+      pages.push(totalPages);
+    } else if (page >= totalPages - 2) {
+      pages.push('...');
+      pages.push(totalPages - 3, totalPages - 2, totalPages - 1);
+      pages.push(totalPages);
+    } else {
+      pages.push('...');
+      pages.push(page - 1, page, page + 1);
+      pages.push('...');
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
+  return (
+    <div className="dm-pagination" style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', padding: '8px 24px', background: 'var(--card-bg)', borderTop: '1px solid var(--border-color)' }}>
+      {pageNumbers.map((p, idx) => (
+        <button
+          key={`${p}-${idx}`}
+          className={`btn btn-sm ${p === page ? '' : 'btn-ghost'}`}
+          disabled={p === '...'}
+          style={{
+            minHeight: '28px',
+            height: '28px',
+            padding: '0 10px',
+            fontSize: '13px',
+            cursor: p === '...' ? 'default' : 'pointer',
+            ...(p === page ? { backgroundColor: 'var(--accent-primary)', color: 'white' } : {})
+          }}
+          onClick={() => {
+            if (typeof p === 'number') onPageChange(p);
+          }}
+        >
+          {p}
+        </button>
+      ))}
     </div>
   );
 }
@@ -126,9 +239,17 @@ export function DeviceMonitor() {
     currentDate,
     totalEvents,
     totalScreenshots,
+    eventPage,
+    eventTotalPages,
+    screenshotPage,
+    screenshotTotalPages,
+    search,
+    sort,
     changeDate,
-    loadMoreEvents,
-    loadMoreScreenshots,
+    setSearch,
+    setSort,
+    setEventPage,
+    setScreenshotPage,
     refresh,
   } = useDeviceMonitor(deviceId || "");
 
@@ -142,8 +263,8 @@ export function DeviceMonitor() {
   }
 
   return (
-    <div className={`dm-page-container ${aiPanel.isOpen ? "ai-panel-open" : ""}`}>
-    <div className="dm-wrapper">
+    <div className={`dm-page-container ${aiPanel.isOpen ? "ai-panel-open" : ""}`} style={{ height: '100vh', overflow: 'hidden' }}>
+    <div className="dm-wrapper" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* ── Header ── */}
       <div className="dm-header">
         <button className="dm-back-btn" onClick={() => navigate("/devices")} id="btn-back-to-devices">
@@ -179,7 +300,7 @@ export function DeviceMonitor() {
         <div className="dm-stat-item">
           <FiActivity size={16} />
           <span>
-            <strong>{totalEvents}</strong> hoạt động ngày {currentDate}
+            <strong>{totalEvents}</strong> hoạt động ngày {formatUIDate(currentDate)}
           </span>
         </div>
         <div className="dm-stat-item">
@@ -212,8 +333,31 @@ export function DeviceMonitor() {
 
       {/* ── Activity Timeline ── */}
       {activeTab === "activity" && (
-        <div className="dm-activity-panel">
-          {loadingEvents && events.length === 0 ? (
+        <>
+          <div className="dm-toolbar" style={{ display: 'flex', gap: '12px', padding: '12px 24px', background: 'var(--card-bg)', borderBottom: '1px solid var(--border-color)', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
+              <FiSearch style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} size={16} />
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm URL, tiêu đề..." 
+                className="dm-date-input" 
+                style={{ width: '100%', paddingLeft: '36px' }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <select 
+              className="dm-date-input" 
+              style={{ width: '130px' }}
+              value={sort}
+              onChange={(e) => setSort(e.target.value as "desc" | "asc")}
+            >
+              <option value="desc">Mới nhất</option>
+              <option value="asc">Cũ nhất</option>
+            </select>
+          </div>
+          <div className="dm-activity-panel" style={{ flex: 1, overflowY: 'auto' }}>
+            {loadingEvents && events.length === 0 ? (
             <div className="dm-skeleton-list">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="dm-skeleton-item" />
@@ -225,33 +369,49 @@ export function DeviceMonitor() {
               text="Chưa có hoạt động nào được ghi nhận trong ngày này."
             />
           ) : (
-            <>
               <div className="dm-timeline">
                 {events.map((evt, idx) => {
                   const browser = isBrowser(evt.processName);
-                  const prevDate =
-                    idx > 0
-                      ? new Date(events[idx - 1].timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit" })
-                      : null;
-                  const thisHour = new Date(evt.timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit" });
-                  const showHourDivider = idx === 0 || prevDate !== thisHour;
+                  const category = getCategoryTag(evt.processName, evt.title);
+                  const getHourLabel = (iso: string) => {
+                    const d = new Date(iso);
+                    return `${d.getHours()} giờ`;
+                  };
+
+                  const prevLabel = idx > 0 ? getHourLabel(events[idx - 1].timestamp) : null;
+                  const thisLabel = getHourLabel(evt.timestamp);
+                  const showHourDivider = idx === 0 || prevLabel !== thisLabel;
 
                   return (
                     <div key={evt.id}>
                       {showHourDivider && (
                         <div className="dm-hour-divider">
                           <FiClock size={12} />
-                          {thisHour}
+                          {thisLabel}
                         </div>
                       )}
                       <div className={`dm-timeline-item ${browser ? "is-browser" : ""} ${aiPanel.activeTitle === evt.title && aiPanel.isOpen ? "ai-active" : ""}`}>
                         <div className="dm-timeline-dot" />
                         <div className="dm-timeline-content">
                           <div className="dm-timeline-header">
-                            <span className={`dm-process-badge ${browser ? "browser" : "app"}`}>
-                              {browser ? <FiGlobe size={12} /> : <FiMonitor size={12} />}
-                              {getProcessDisplayName(evt.processName)}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className={`dm-process-badge ${browser ? "browser" : "app"}`}>
+                                {browser ? <FiGlobe size={12} /> : <FiMonitor size={12} />}
+                                {getProcessDisplayName(evt.processName)}
+                              </span>
+                              <span 
+                                style={{ 
+                                  fontSize: '11px', 
+                                  fontWeight: 600, 
+                                  padding: '2px 8px', 
+                                  borderRadius: '12px', 
+                                  color: 'white', 
+                                  backgroundColor: getCategoryColor(category) 
+                                }}
+                              >
+                                {category}
+                              </span>
+                            </div>
                             <div className="dm-timeline-right">
                               <span className="dm-timeline-time">
                                 {formatTime(evt.timestamp)}
@@ -275,33 +435,18 @@ export function DeviceMonitor() {
                   );
                 })}
               </div>
-
-              {events.length < totalEvents && (
-                <div className="dm-load-more">
-                  <button
-                    id="btn-load-more-events"
-                    className="btn btn-ghost"
-                    onClick={loadMoreEvents}
-                    disabled={loadingEvents}
-                  >
-                    {loadingEvents ? (
-                      <span className="btn-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                    ) : (
-                      <>
-                        <FiChevronDown size={16} /> Tải thêm ({totalEvents - events.length} còn lại)
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </>
+            )}
+          </div>
+          {!loadingEvents && events.length > 0 && (
+            <Pagination page={eventPage} totalPages={eventTotalPages} onPageChange={setEventPage} />
           )}
-        </div>
+        </>
       )}
 
       {/* ── Screenshots Gallery ── */}
       {activeTab === "screenshots" && (
-        <div className="dm-screenshots-panel">
+        <>
+        <div className="dm-screenshots-panel" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div className="dm-gallery-toolbar">
             <button
               className={`dm-view-btn ${screenshotView === "grid" ? "active" : ""}`}
@@ -333,7 +478,6 @@ export function DeviceMonitor() {
               text="Chưa có ảnh chụp màn hình nào trong ngày này."
             />
           ) : (
-            <>
               <div className={`dm-gallery ${screenshotView}`}>
                 {screenshots.map((s) => (
                   <div
@@ -358,28 +502,12 @@ export function DeviceMonitor() {
                   </div>
                 ))}
               </div>
-
-              {screenshots.length < totalScreenshots && (
-                <div className="dm-load-more">
-                  <button
-                    id="btn-load-more-screenshots"
-                    className="btn btn-ghost"
-                    onClick={loadMoreScreenshots}
-                    disabled={loadingScreenshots}
-                  >
-                    {loadingScreenshots ? (
-                      <span className="btn-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                    ) : (
-                      <>
-                        <FiChevronDown size={16} /> Tải thêm ảnh ({totalScreenshots - screenshots.length} còn lại)
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+            )}
         </div>
+        {!loadingScreenshots && screenshots.length > 0 && (
+          <Pagination page={screenshotPage} totalPages={screenshotTotalPages} onPageChange={setScreenshotPage} />
+        )}
+        </>
       )}
 
       {/* ── Lightbox ── */}

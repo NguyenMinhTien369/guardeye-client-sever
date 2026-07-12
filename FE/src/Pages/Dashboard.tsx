@@ -9,7 +9,8 @@ import {
   FiCheckCircle, 
   FiXCircle, 
   FiPauseCircle,
-  FiChevronRight
+  FiChevronRight,
+  FiPieChart
 } from "react-icons/fi";
 import "./Dashboard.css"; // We will create this file next
 
@@ -101,13 +102,23 @@ export function Dashboard() {
 
               return (
                 <div key={child.id} className="child-overview-card">
-                  <div className="child-card-header">
-                    <div className="child-avatar">
-                      {child.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="child-meta">
-                      <h3>{child.name}</h3>
-                      <p>{child.age} tuổi • {child.gender === 'male' ? 'Nam' : child.gender === 'female' ? 'Nữ' : 'Khác'}</p>
+                  <div className="child-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div className="child-avatar" style={{ overflow: 'hidden' }}>
+                        {child.avatarUrl ? (
+                          <img 
+                            src={child.avatarUrl.startsWith("http") ? child.avatarUrl : `http://localhost:5000${child.avatarUrl}`} 
+                            alt="Avatar" 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          child.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="child-meta">
+                        <h3>{child.name}</h3>
+                        <p>{child.age} tuổi • {child.gender === 'male' ? 'Nam' : child.gender === 'female' ? 'Nữ' : 'Khác'}</p>
+                      </div>
                     </div>
                   </div>
                   
@@ -131,7 +142,7 @@ export function Dashboard() {
                               title="Xem nhật ký giám sát"
                               onClick={() => navigate(`/devices/${device.id}/monitor`)}
                             >
-                              <FiClock /> <span className="sr-only">Xem log</span>
+                              <FiMonitor />
                             </button>
                           </div>
                         ))}
@@ -139,7 +150,10 @@ export function Dashboard() {
                     )}
                   </div>
                   
-                  <div className="child-card-footer">
+                  <div className="child-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button className="btn-link" onClick={() => navigate(`/children/${child.id}/dashboard`)}>
+                      Xem báo cáo <FiChevronRight />
+                    </button>
                     <button className="btn-link" onClick={() => navigate('/devices')}>
                       Quản lý thiết bị <FiChevronRight />
                     </button>

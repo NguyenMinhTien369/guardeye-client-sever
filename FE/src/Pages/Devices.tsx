@@ -138,6 +138,7 @@ export function Devices() {
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const [activeTab, setActiveTab] = useState<'disconnected' | 'connected'>('connected');
 
   // Load devices khi mount — API 2: GET /devices
   useEffect(() => {
@@ -228,8 +229,12 @@ export function Devices() {
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+  const disconnectedDevices = devices.filter(d => d.status !== 'active');
+  const connectedDevices = devices.filter(d => d.status === 'active');
+  const currentDevices = activeTab === 'disconnected' ? disconnectedDevices : connectedDevices;
+
   return (
-    <div className="children-page">
+    <div className="devices-page">
       {/* Header */}
       <div className="children-page-header">
         <div className="children-page-title-group">
@@ -271,6 +276,24 @@ export function Devices() {
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="dm-tabs" style={{ marginBottom: '1.5rem', marginTop: '1rem' }}>
+        <button
+          className={`dm-tab ${activeTab === 'connected' ? 'active' : ''}`}
+          onClick={() => setActiveTab('connected')}
+        >
+          Đang hoạt động
+          {connectedDevices.length > 0 && <span className="dm-tab-badge">{connectedDevices.length}</span>}
+        </button>
+        <button
+          className={`dm-tab ${activeTab === 'disconnected' ? 'active' : ''}`}
+          onClick={() => setActiveTab('disconnected')}
+        >
+          Thiết bị chưa kết nối
+          {disconnectedDevices.length > 0 && <span className="dm-tab-badge">{disconnectedDevices.length}</span>}
+        </button>
+      </div>
+
       {/* Loading Skeleton */}
       {isLoading && devices.length === 0 ? (
         <div className="children-loading-grid">
@@ -282,7 +305,7 @@ export function Devices() {
         <EmptyState onAdd={handleOpenCreate} />
       ) : (
         <div className="devices-grid">
-          {devices.map((device) => (
+          {currentDevices.map((device) => (
             <DeviceCard
               key={device.id}
               device={device}
@@ -293,6 +316,11 @@ export function Devices() {
               onViewMonitor={(d) => navigate(`/devices/${d.id}/monitor`)}
             />
           ))}
+          {currentDevices.length === 0 && (
+            <div className="split-empty-text" style={{ gridColumn: '1 / -1' }}>
+              Không có thiết bị nào trong danh mục này
+            </div>
+          )}
         </div>
       )}
 

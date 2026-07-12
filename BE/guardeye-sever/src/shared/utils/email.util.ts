@@ -40,15 +40,27 @@ class EmailService {
    */
   async sendVerificationEmail(to: string, token: string): Promise<void> {
     const subject = "Xác thực địa chỉ email - GuardEye";
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const verifyLink = `${clientUrl}/verify-email?token=${token}`;
+
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Xác thực tài khoản của bạn</h2>
-        <p>Cảm ơn bạn đã đăng ký tài khoản tại GuardEye.</p>
-        <p>Để hoàn tất quá trình đăng ký, vui lòng sử dụng mã xác nhận (OTP) dưới đây:</p>
-        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-          ${token}
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="color: #3B82F6;">Xác thực tài khoản của bạn</h2>
+        <p>Chào bạn,</p>
+        <p>Cảm ơn bạn đã đăng ký tài khoản tại GuardEye. Để hoàn tất quá trình đăng ký và sử dụng dịch vụ, vui lòng nhấn vào nút bên dưới để xác thực địa chỉ email của bạn:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verifyLink}" style="background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
+            Xác thực Email
+          </a>
         </div>
-        <p>Mã này dùng để xác thực email của bạn.</p>
+        
+        <p>Hoặc bạn có thể sao chép và dán liên kết sau vào trình duyệt:</p>
+        <p style="word-break: break-all; color: #666; font-size: 14px;">
+          <a href="${verifyLink}">${verifyLink}</a>
+        </p>
+        
+        <p>Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.</p>
         <p>Trân trọng,<br>Đội ngũ GuardEye</p>
       </div>
     `;

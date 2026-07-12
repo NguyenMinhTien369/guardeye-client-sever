@@ -8,6 +8,7 @@ export interface Child {
   name: string;
   age: number;
   gender: GenderType;
+  avatarUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
