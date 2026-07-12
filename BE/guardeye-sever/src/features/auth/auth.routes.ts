@@ -9,6 +9,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  verifyOtpSchema,
   refreshTokenSchema,
 } from "./auth.validation";
 import { authenticate } from "../../shared/middlewares/auth.middleware";
@@ -40,6 +41,13 @@ router.post(
   "/forgot-password",
   validate(forgotPasswordSchema),
   authController.forgotPassword,
+);
+
+// POST /auth/verify-otp
+router.post(
+  "/verify-otp",
+  validate(verifyOtpSchema),
+  authController.verifyOtp,
 );
 
 // POST /auth/reset-password
