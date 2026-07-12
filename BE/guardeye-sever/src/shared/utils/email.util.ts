@@ -88,8 +88,4 @@ class EmailService {
   }
 }
 
-<<<<<<< HEAD
 export default new EmailService();
-=======
-export default new EmailService();
->>>>>>> fe-long
