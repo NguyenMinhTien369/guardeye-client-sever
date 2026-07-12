@@ -126,19 +126,6 @@ export const verifyOtpSchema = z.object({
     .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
 });
 
-export const verifyOtpSchema = z.object({
-  email: z
-    .string({ required_error: "Email là bắt buộc" })
-    .trim()
-    .toLowerCase()
-    .email("Định dạng email không hợp lệ"),
-  
-  otp: z
-    .string({ required_error: "Mã OTP là bắt buộc" })
-    .length(6, "Mã OTP phải gồm 6 chữ số")
-    .regex(/^\d+$/, "Mã OTP chỉ được chứa số"),
-});
-
 export const refreshTokenSchema = z.object({
   refreshToken: z
     .string({ required_error: "Refresh token là bắt buộc" })
