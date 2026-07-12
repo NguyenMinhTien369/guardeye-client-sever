@@ -19,9 +19,20 @@ export class ChildrenService {
       name: child.name,
       age: child.age,
       gender: child.gender,
+      avatarUrl: child.avatarUrl || null,
       createdAt: child.createdAt,
       updatedAt: child.updatedAt,
     };
+  }
+
+  async updateAvatar(childId: string, parentId: string, filename: string): Promise<ChildResponseDto> {
+    const child = await childrenRepository.findByIdAndParent(childId, parentId);
+    if (!child) {
+      throw new NotFoundError("Không tìm thấy hồ sơ của bé");
+    }
+    const avatarUrl = `/uploads/avatars/${filename}`;
+    const updated = await childrenRepository.updateByIdAndParent(childId, parentId, { avatarUrl });
+    return this.toResponseDto(updated!);
   }
 
   /**

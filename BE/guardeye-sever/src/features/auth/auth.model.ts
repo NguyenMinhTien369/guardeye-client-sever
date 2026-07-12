@@ -13,6 +13,7 @@ export interface IUser extends Document, IUserMethods {
   email: string;
   password?: string;
   name: string;
+  avatarUrl: string | null;
   notificationEmail: string | null;
   notifications: {
     email: boolean;
@@ -66,6 +67,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       trim: true,
       minlength: [2, "Tên phải có ít nhất 2 ký tự"],
       maxlength: [50, "Tên không được vượt quá 50 ký tự"],
+    },
+    avatarUrl: {
+      type: String,
+      default: null,
     },
     notificationEmail: {
       type: String,

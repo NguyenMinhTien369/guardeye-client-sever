@@ -3,6 +3,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   notificationEmail: string | null;
   notifications: {
     email: boolean;
@@ -41,6 +42,20 @@ export interface ResetPasswordRequest {
 
 export interface RefreshTokenRequest {
   refreshToken: string;
+}
+
+export interface UpdateProfileRequest {
+  name?: string;
+  notifications?: {
+    email?: boolean;
+    browser?: boolean;
+  };
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
 
 // ===== Response DTOs =====
@@ -89,4 +104,5 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
   resetPassword: (data: ResetPasswordRequest) => Promise<string>;
+  updateUser: (user: User) => void;
 }

@@ -1,5 +1,5 @@
 import { useState, useMemo, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiUser,
   FiMail,
@@ -45,6 +45,7 @@ const strengthLabels: Record<PasswordStrength, string> = {
 
 export function Register() {
   const { register } = useAuth();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -128,6 +129,7 @@ export function Register() {
         password,
         confirmPassword,
       });
+      // Đăng ký thành công -> hiển thị message yêu cầu check email
       setSuccessMessage(message);
     } catch (error) {
       if (axios.isAxiosError(error)) {

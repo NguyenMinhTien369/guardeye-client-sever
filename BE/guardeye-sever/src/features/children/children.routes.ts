@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as childrenController from "./children.controller";
 import { validate, createChildSchema, updateChildSchema } from "./children.validation";
 import { authenticate } from "../../shared/middlewares/auth.middleware";
+import { avatarUpload } from "./avatar.upload";
 
 // -----------------------------------------------------------------------------
 // CHILDREN ROUTES
@@ -24,6 +25,16 @@ router.get("/:id", childrenController.getById);
 
 // PUT /children/:id
 router.put("/:id", validate(updateChildSchema), childrenController.update);
+
+// POST /children/:id/avatar
+router.post(
+  "/:id/avatar",
+  avatarUpload.single("avatar"),
+  (req: any, res: any, next: any) => {
+    next();
+  },
+  childrenController.uploadAvatar
+);
 
 // DELETE /children/:id
 router.delete("/:id", childrenController.remove);
