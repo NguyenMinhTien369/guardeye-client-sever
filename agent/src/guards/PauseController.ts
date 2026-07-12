@@ -27,6 +27,15 @@ export class PauseController {
   /** Trạng thái hiện tại được cache. Mặc định: không tạm dừng. */
   private isPaused: boolean = false;
 
+  /**
+   * Thời điểm auto-resume được cache từ server.
+   * null = pause vô thời hạn (chỉ resume khi phụ huynh bấm thủ công).
+   */
+  private pausedUntil: Date | null = null;
+
+  /** Đã log auto-resume chưa — tránh spam log mỗi 5s khi main loop gọi getIsPaused(). */
+  private hasLoggedAutoResume: boolean = false;
+
   /** Thời điểm poll thành công cuối cùng. */
   private lastSuccessfulPoll: Date | null = null;
 
@@ -86,6 +95,23 @@ export class PauseController {
    * Trả về true nếu agent đang bị tạm dừng.
    */
   public getIsPaused(): boolean {
+    // Auto-resume client-side: server bảo pause nhưng pausedUntil đã qua → bỏ qua
+    if (this.isPaused && this.pausedUntil !== null) {
+      if (new Date() >= this.pausedUntil) {
+        if (!this.hasLoggedAutoResume) {
+          this.hasLoggedAutoResume = true;
+          console.log(
+            "[PauseController] Hết hạn pause — tự động resume ▶" +
+            " (isPaused server-side vẫn = true, sẽ đồng bộ ở poll tiếp theo).",
+          );
+        }
+        return false;
+      }
+    }
+    // Reset flag khi server xác nhận đã resume (hoặc đang running bình thường)
+    if (!this.isPaused) {
+      this.hasLoggedAutoResume = false;
+    }
     return this.isPaused;
   }
 
@@ -201,6 +227,7 @@ export class PauseController {
   private applyStatus(data: PauseStatusResponse): void {
     const previousState = this.isPaused;
     this.isPaused = data.paused;
+    this.pausedUntil = data.until ? new Date(data.until) : null;
     this.lastSuccessfulPoll = new Date();
     this.consecutiveFailures = 0;
 
@@ -208,8 +235,11 @@ export class PauseController {
     if (previousState !== this.isPaused) {
       const stateLabel = this.isPaused ? "TẠM DỪNG ⏸" : "TIẾP TỤC ▶";
       const reason = data.reason ? ` (Lý do: ${data.reason})` : "";
+      const until = this.pausedUntil
+        ? ` [Hết hạn: ${this.pausedUntil.toISOString()}]`
+        : "";
       console.log(
-        `[PauseController] Trạng thái thay đổi → ${stateLabel}${reason}`,
+        `[PauseController] Trạng thái thay đổi → ${stateLabel}${reason}${until}`,
       );
     }
   }

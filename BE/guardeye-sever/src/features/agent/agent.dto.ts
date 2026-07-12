@@ -126,6 +126,12 @@ export interface AgentStatusResponseDto {
   since?: string;
 
   /**
+   * ISO 8601 — thời điểm auto-resume (Agent tự thoát trạng thái pause khi qua mốc này).
+   * undefined nếu pause vô thời hạn — chỉ resume khi phụ huynh bấm resume thủ công.
+   */
+  until?: string;
+
+  /**
    * Lý do tạm dừng — Agent in ra log để debug.
    * undefined nếu phụ huynh không điền lý do.
    */

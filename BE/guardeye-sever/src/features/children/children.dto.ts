@@ -20,6 +20,7 @@ export interface UpdateChildRequestDto {
   name?: string;
   age?: number;
   gender?: GenderType;
+  avatarUrl?: string;
 }
 
 // [LIST] Query params khi lấy danh sách bé của parent
@@ -41,6 +42,7 @@ export interface ChildResponseDto {
   name: string;
   age: number;
   gender: GenderType;
+  avatarUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

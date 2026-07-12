@@ -6,9 +6,20 @@ import crypto from 'crypto';
 export const sanitizeUrl = (rawUrl: string): string => {
   try {
     const parsedUrl = new URL(rawUrl);
-    // Ví dụ: https://discord.com/channels/123 -> Giữ nguyên
-    // Ví dụ: https://game.com/play?session=abc -> Thành https://game.com/play
-    return `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.pathname}`;
+    
+    // Giữ lại các query param quan trọng định hình nội dung trang (vd: video youtube, từ khóa tìm kiếm)
+    const searchParams = new URLSearchParams(parsedUrl.search);
+    const keepParams = ['v', 'q', 'id', 'query'];
+    const finalParams = new URLSearchParams();
+    
+    for (const p of keepParams) {
+      if (searchParams.has(p)) {
+        finalParams.set(p, searchParams.get(p)!);
+      }
+    }
+    
+    const query = finalParams.toString() ? `?${finalParams.toString()}` : '';
+    return `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.pathname}${query}`;
   } catch (error) {
     // Nếu URL không hợp lệ, trả về chuỗi gốc (hoặc handle lỗi tùy ý)
     return rawUrl;

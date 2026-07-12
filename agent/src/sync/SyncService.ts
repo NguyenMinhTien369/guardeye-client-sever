@@ -7,6 +7,12 @@ export interface SyncServiceOptions {
   config: AgentConfig;
   buffer: DataBuffer;
   fetchFn?: typeof fetch;
+  /**
+   * Hàm trả về true khi Agent đang ở trạng thái pause.
+   * Nếu true, syncOnce() sẽ bỏ qua — không gửi data lên server.
+   * Inject từ PauseController.getIsPaused.bind(pauseController).
+   */
+  isPausedFn?: () => boolean;
 }
 
 // ─── Class ────────────────────────────────────────────────────────────────────
@@ -36,10 +42,17 @@ export class SyncService {
     lastFailureReason: null as string | null,
   };
 
+  /**
+   * Hàm kiểm tra trạng thái pause — inject từ PauseController.
+   * Mặc định: luôn trả false (không pause) để backward-compatible.
+   */
+  private readonly isPausedFn: () => boolean;
+
   constructor(options: SyncServiceOptions) {
     this.config = options.config;
     this.buffer = options.buffer;
     this.fetchFn = options.fetchFn ?? globalThis.fetch.bind(globalThis);
+    this.isPausedFn = options.isPausedFn ?? (() => false);
   }
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
@@ -98,6 +111,11 @@ export class SyncService {
    *  5. Nếu lỗi → giữ buffer, log và chờ lần sau.
    */
   private async syncOnce(): Promise<void> {
+    // Không gửi data khi Agent đang bị pause
+    if (this.isPausedFn()) {
+      return;
+    }
+
     // Không làm gì nếu buffer rỗng
     if (this.buffer.isEmpty) {
       return;

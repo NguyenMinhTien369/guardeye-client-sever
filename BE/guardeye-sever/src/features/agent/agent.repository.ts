@@ -56,10 +56,11 @@ const agentRepository = {
   async getDevicePauseStatus(deviceId: string): Promise<{
     paused: boolean;
     since?: string;
+    until?: string;
     reason?: string;
   }> {
     const device = await Device.findById(deviceId).select(
-      "isPaused pausedSince",
+      "isPaused pausedSince pausedUntil",
     );
 
     if (!device) {
@@ -71,7 +72,10 @@ const agentRepository = {
       since: device.pausedSince
         ? device.pausedSince.toISOString()
         : undefined,
-      reason: undefined, // Hiện tại model chưa có trường reason
+      until: device.pausedUntil
+        ? device.pausedUntil.toISOString()
+        : undefined,
+      reason: undefined, // Model chưa có trường reason — giữ nguyên
     };
   },
 };

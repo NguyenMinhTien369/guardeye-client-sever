@@ -9,17 +9,29 @@ import {
 } from "../features/screenshot/screenshot.routes";
 // import tradeRoutes from '../features/trade/trade.routes';
 import aiRoutes from '../features/ai/ai.routes'; // Import router AI
+
+/*
+// CODE CŨ (TỪ NHÁNH CỦA BẠN TRƯỚC KHI PULL):
 import dashboardRoutes from '../features/dashboard/dashboard.routes'; // Dashboard FE
+*/
+
+// CODE MỚI TRÊN GITHUB:
+import dashboardRoutes from '../features/dashboard/dashboard.routes';
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/children", childrenRoutes);
 
+/*
+// CODE CŨ:
+router.use("/dashboard", dashboardRoutes);
+*/
+
 // Thêm route AI vào hệ thống
 router.use('/ai', aiRoutes);
 
-// GET /api/v1/dashboard/device/:deviceId/activity — Phụ huynh xem lịch sử WindowEvent
+// CODE MỚI TRÊN GITHUB:
 router.use('/dashboard', dashboardRoutes);
 
 // POST /api/v1/children/:childId/devices

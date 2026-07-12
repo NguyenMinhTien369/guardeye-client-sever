@@ -5,7 +5,7 @@ import { sanitizeUrl, hashUrl } from '../../shared/utils/url.util';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Model mặc định — thay đổi sang gemini-2.5-flash vì 1.5 đã bị loại bỏ
+// Model mặc định
 const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 // Kiểm tra API key khi khởi động
@@ -33,21 +33,22 @@ export class AiService {
     if (cachedAnalysis) return cachedAnalysis;
 
     const prompt = `
-      Bạn là một chuyên gia an toàn mạng cho trẻ em. Hãy phân tích URL sau: "${cleanUrl}".
-      Trả về ĐÚNG định dạng JSON sau, không kèm bất kỳ văn bản nào khác:
+      Bạn là một chuyên gia an toàn mạng cho trẻ em. Dựa vào URL hoặc thông tin sau: "${cleanUrl}", hãy xác định nền tảng/trang web/ứng dụng mà trẻ đang truy cập và phân tích mức độ an toàn của nó đối với trẻ em.
+      Nếu đây là một đường dẫn tìm kiếm (ví dụ chứa google.com/search?q=...), hãy phân tích nội dung/từ khóa mà trẻ đang tìm kiếm thay vì phân tích công cụ tìm kiếm.
+      Trả về ĐÚNG định dạng JSON sau, không kèm bất kỳ văn bản nào khác (không dùng markdown format \`\`\`json):
       {
-        "platformName": "Tên nền tảng (vd: YouTube, Discord)",
-        "description": "Mô tả ngắn gọn nền tảng này làm gì",
+        "platformName": "Tên nền tảng hoặc chủ đề (vd: YouTube, Discord, Minecraft)",
+        "description": "Mô tả ngắn gọn nền tảng/chủ đề này là gì",
         "mainActivities": ["Hoạt động 1", "Hoạt động 2"],
         "safetyLevel": "Safe hoặc Warning hoặc Danger",
-        "parentAdvice": "Lời khuyên ngắn gọn cho phụ huynh khi con truy cập trang này"
+        "parentAdvice": "Lời khuyên ngắn gọn cho phụ huynh"
       }
     `;
 
     try {
       const selectedModel = await getModelName();
       const model = genAI.getGenerativeModel({ model: selectedModel });
-      
+
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
 
@@ -83,7 +84,7 @@ export class AiService {
       const model = genAI.getGenerativeModel({ model: selectedModel });
 
       const history = [
-        { role: 'user', parts: [{ text: `Ngữ cảnh: Chúng ta đang thảo luận về trang web ${cleanUrl}. Trả lời ngắn gọn, dễ hiểu cho phụ huynh.` }] },
+        { role: 'user', parts: [{ text: `Ngữ cảnh: Chúng ta đang thảo luận về nền tảng hoặc nội dung liên quan đến đường dẫn/từ khóa: "${cleanUrl}". Hãy đóng vai chuyên gia an toàn mạng, trả lời ngắn gọn, dễ hiểu cho phụ huynh.` }] },
         { role: 'model', parts: [{ text: 'Tôi đã hiểu.' }] },
         ...chatSession.messages.map(msg => ({
           role: msg.role === 'ai' ? 'model' : 'user',
